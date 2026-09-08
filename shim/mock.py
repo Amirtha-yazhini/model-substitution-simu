@@ -57,21 +57,46 @@ class MockModel:
                 return v
         return universe[-1]
 
+    # Task detection must be language-agnostic: Bruckner's battery runs the same
+    # task in English, Russian, Chinese and Arabic, and a mock that only parses
+    # English would silently drop 6 of 8 cells.
+    _COIN_MARKERS = ("coin", "монет", "硬币", "عملة", "heads")
+
+    def _lang_of(self, prompt: str) -> str:
+        if any("Ѐ" <= c <= "ӿ" for c in prompt):
+            return "ru"
+        if any("一" <= c <= "鿿" for c in prompt):
+            return "zh"
+        if any("؀" <= c <= "ۿ" for c in prompt):
+            return "ar"
+        return "en"
+
     def answer(self, prompt: str, rng: random.Random) -> str:
         low = prompt.lower()
-        if "between 1 and 100" in low or "1 and 100" in low:
-            val = self._categorical(rng, self.number_bias, list(range(1, 101)))
+        lang = self._lang_of(prompt)
+
+        # Real models carry language-dependent biases - that is precisely why the
+        # battery is multilingual - so perturb the bias slightly per language
+        # rather than reusing one distribution across all four cells.
+        def shifted(bias: dict) -> dict:
+            if lang == "en":
+                return bias
+            shift = {"ru": 0.75, "zh": 0.6, "ar": 0.5}[lang]
+            return {k: v * shift for k, v in bias.items()}
+
+        if "100" in low:
+            val = self._categorical(rng, shifted(self.number_bias), list(range(1, 101)))
             out = str(val)
-        elif "between 1 and 10" in low or "1 and 10" in low:
-            val = self._categorical(rng, {k: v for k, v in self.number_bias.items() if k <= 10},
+        elif any(m in low for m in self._COIN_MARKERS):
+            out = self._categorical(rng, shifted({"heads": 0.55}), ["heads", "tails"])
+        elif "10" in low:
+            val = self._categorical(rng, shifted({k: v for k, v in self.number_bias.items() if k <= 10}),
                                     list(range(1, 11)))
             out = str(val)
-        elif "coin" in low:
-            out = self._categorical(rng, {"heads": 0.55}, ["heads", "tails"])
         elif "colour" in low or "color" in low:
-            out = self._categorical(rng, self.word_bias, ["blue", "red", "green", "purple", "teal"])
+            out = self._categorical(rng, shifted(self.word_bias), ["blue", "red", "green", "purple", "teal"])
         elif "animal" in low:
-            out = self._categorical(rng, self.word_bias, ["dog", "cat", "fox", "otter", "owl"])
+            out = self._categorical(rng, shifted(self.word_bias), ["dog", "cat", "fox", "otter", "owl"])
         else:
             # Deterministic-but-model-specific filler for open prompts.
             h = int(hashlib.sha256((self.name + prompt).encode()).hexdigest()[:8], 16)
@@ -93,34 +118,48 @@ class MockModel:
 # deliberately distinguishable but not trivially so, and `alternate-70b` is a
 # near-twin of genuine - it is the same weights on other hardware, so A11 is
 # genuinely hard to separate from A3. That difficulty is the point.
+#
+# Concentration is calibrated to Bruckner's measurement, not invented: he reports
+# a MEDIAN PER-CELL ENTROPY OF ~1.0 BIT against theoretical baselines of 1-6.6
+# bits. One bit is roughly two effective answers, so real models put most of
+# their mass on a handful of values.
+#
+# This matters more than it looks. An earlier draft spread ~56% of the mass
+# uniformly across 95 values; at 30 samples per cell that produced two nearly
+# disjoint sparse supports even for the SAME model, so honest-vs-honest JSD sat
+# at ~0.31 and swamped the real signal. Jensen-Shannon on a sparse
+# high-cardinality categorical is badly upward-biased at small n - the fix is a
+# realistic distribution, not a tuned threshold.
 MOCK_MODELS: dict[str, MockModel] = {
     "genuine-70b": MockModel(
         name="genuine-70b",
-        number_bias={42: 0.18, 73: 0.11, 7: 0.07, 37: 0.05, 69: 0.03},
-        word_bias={"blue": 0.42, "dog": 0.30},
+        number_bias={42: 0.52, 73: 0.22, 7: 0.11, 37: 0.06, 69: 0.04},
+        word_bias={"blue": 0.62, "dog": 0.55},
         latency_mean_s=1.10, latency_cv=0.30,
         pad_with_period=False, tokens_per_char=0.27,
     ),
     "substitute-8b": MockModel(
         name="substitute-8b",
-        number_bias={57: 0.16, 7: 0.14, 23: 0.09, 42: 0.06, 77: 0.05},
-        word_bias={"red": 0.36, "cat": 0.33},
+        number_bias={57: 0.48, 7: 0.24, 23: 0.13, 42: 0.08, 77: 0.04},
+        word_bias={"red": 0.58, "cat": 0.51},
         latency_mean_s=0.35, latency_cv=0.22,     # smaller model: faster
         pad_with_period=True, uppercase_words=True, tokens_per_char=0.31,
     ),
     "alternate-70b": MockModel(
         name="alternate-70b",
         # Same family as genuine, slightly perturbed - a different provider of
-        # the same weights, differing only by serving-stack numerics.
-        number_bias={42: 0.16, 73: 0.12, 7: 0.06, 37: 0.06, 69: 0.03},
-        word_bias={"blue": 0.39, "dog": 0.28},
+        # the same weights, differing only by serving-stack numerics. The gap
+        # here is deliberately small, which is what makes A11 (benign routing)
+        # genuinely hard to separate from A3 (dilution).
+        number_bias={42: 0.49, 73: 0.23, 7: 0.12, 37: 0.07, 69: 0.04},
+        word_bias={"blue": 0.59, "dog": 0.53},
         latency_mean_s=0.85, latency_cv=0.45,     # different infra: more jitter
         pad_with_period=False, tokens_per_char=0.27,
     ),
     "launderer": MockModel(
         name="launderer",
-        number_bias={57: 0.15, 7: 0.13},
-        word_bias={"red": 0.34},
+        number_bias={57: 0.47, 7: 0.25, 23: 0.12},
+        word_bias={"red": 0.57},
         latency_mean_s=0.25, latency_cv=0.20,
         pad_with_period=False, tokens_per_char=0.27,   # imitates genuine's surface
     ),
@@ -130,13 +169,29 @@ MOCK_MODELS: dict[str, MockModel] = {
 class MockBackend:
     """Drop-in stand-in for LiveBackend. Never touches the network."""
 
-    def __init__(self, models: dict[str, MockModel] | None = None, *, simulate_latency: bool = False):
+    def __init__(
+        self,
+        models: dict[str, MockModel] | None = None,
+        *,
+        simulate_latency: bool = False,
+        session_seed: int = 0,
+    ):
         self.models = models or MOCK_MODELS
         self.simulate_latency = simulate_latency
+        self.session_seed = session_seed
         self.calls = 0
+        # Per-(model, prompt) call counter. A real endpoint at temperature 1
+        # returns a DIFFERENT sample each time you send the same prompt; without
+        # this counter the mock returns the same answer forever, honest-vs-honest
+        # divergence collapses to exactly 0, and the null distribution every
+        # threshold depends on becomes an artefact.
+        self._seen: dict[str, int] = {}
 
     def _rng(self, endpoint: Endpoint, prompt: str, nonce: int) -> random.Random:
-        seed_src = f"{endpoint.model}|{prompt}|{nonce}"
+        key = f"{endpoint.model}|{prompt}"
+        draw = self._seen.get(key, 0)
+        self._seen[key] = draw + 1
+        seed_src = f"{self.session_seed}|{key}|{nonce}|{draw}"
         seed = int(hashlib.sha256(seed_src.encode()).hexdigest()[:16], 16)
         return random.Random(seed)
 
@@ -166,14 +221,13 @@ class MockBackend:
         latency = model.latency(rng)
 
         # Temperature actually bites: low temperature collapses onto the mode.
+        # This is what makes arm A4 (sampler retune) a genuine specificity test -
+        # the distribution moves while the weights stay the same.
         temp = payload.get("temperature")
         if temp is not None and temp < 0.3:
-            mode_rng = self._rng(endpoint, prompt, 0)
-            biased = model.number_bias or model.word_bias
-            if biased:
-                text = model.answer(prompt, random.Random(
-                    int(hashlib.sha256((model.name + prompt + "mode").encode()).hexdigest()[:16], 16)
-                ))
+            text = model.answer(prompt, random.Random(
+                int(hashlib.sha256((model.name + prompt + "mode").encode()).hexdigest()[:16], 16)
+            ))
 
         if self.simulate_latency:
             time.sleep(min(latency, 0.05))  # token gesture; never actually wait
