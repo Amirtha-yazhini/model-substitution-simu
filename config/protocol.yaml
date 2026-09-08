@@ -1,0 +1,101 @@
+protocol_version: 1
+generated_at: '2026-09-08T15:44:59+00:00'
+git_commit: 77222c2ca86672a04b27b85f8e5b031ae6f7c725
+alpha: 0.01
+conformal_fpr_bound: 0.009900990099009901
+conditions:
+  reference_seed: 1
+  calibration_seeds:
+  - 100
+  - 199
+  holdout_seeds:
+  - 9000
+  - 9049
+  suite_plan:
+    ote:
+      cells: 8
+      repeats: 30
+    iris:
+      cells: 4
+      repeats: 30
+    kbf:
+      cells: 15
+      repeats: 5
+    bench:
+      cells: 12
+      repeats: 5
+  queries_per_session: 495
+  auditor_suite:
+    OTE: ote
+    IRIS-lite: iris
+    GATEOPS: ote
+    KBF: kbf
+    BENCH: bench
+    RUT: ote
+  ote_permutations: 200
+  iris_trees: 100
+  iris_splits: 3
+  ladder: mock
+thresholds:
+  OTE:
+    threshold: 0.015243603567865062
+    scale: score
+    source: max of 100 honest calibration sessions (conformal)
+    conformal_fpr_bound: 0.009900990099009901
+    n_calibration: 100
+    calibration_mean: -0.005446763863540509
+    calibration_sd: 0.00912877833662118
+    n_inapplicable: 0
+  IRIS-lite:
+    threshold: 0.10000000000000009
+    scale: score
+    source: max of 100 honest calibration sessions (conformal)
+    conformal_fpr_bound: 0.009900990099009901
+    n_calibration: 100
+    calibration_mean: 0.003916666666666668
+    calibration_sd: 0.014576657923850602
+    n_inapplicable: 0
+  GATEOPS:
+    threshold: 0.10000000000000003
+    scale: score
+    source: max of 100 honest calibration sessions (conformal)
+    conformal_fpr_bound: 0.009900990099009901
+    n_calibration: 100
+    calibration_mean: 0.06341666666666668
+    calibration_sd: 0.01527869602382848
+    n_inapplicable: 0
+  KBF:
+    threshold: 0.16000000000000003
+    scale: score
+    source: max of 100 honest calibration sessions (conformal)
+    conformal_fpr_bound: 0.009900990099009901
+    n_calibration: 100
+    calibration_mean: 0.03346666666666664
+    calibration_sd: 0.03419072405890635
+    n_inapplicable: 0
+  BENCH:
+    threshold: 0.016666666666666607
+    scale: score
+    source: max of 100 honest calibration sessions (conformal)
+    conformal_fpr_bound: 0.009900990099009901
+    n_calibration: 100
+    calibration_mean: 0.00033333333333333213
+    calibration_sd: 0.00234508823560482
+    n_inapplicable: 0
+  RUT:
+    threshold: null
+    source: inapplicable on all 100 calibration sessions
+    n_calibration: 0
+  FUSE:
+    threshold: 100.0
+    scale: e_value
+    source: Ville's inequality, not fitted
+    n_calibration: 100
+validity_gates:
+  min_cells_ote: 8
+  applicable_false_is_uninformative: true
+  one_sided_tests: true
+  note: A method that cannot run returns uninformative, never consistent. Changing
+    any threshold after sealing requires a new protocol version and a new git tag,
+    and must be reported as such.
+sha256: 923a3d217470a347be94fbef29f419f79f08ed9f6c6fbf506d1f7f49ebdb51c0
