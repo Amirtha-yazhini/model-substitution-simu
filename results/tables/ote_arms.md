@@ -10,15 +10,15 @@ Threshold: the maximum over **100 independent honest calibration sessions** = **
 |---|---|---|---|---|---|---|
 | A0 | honest | -0.0128 | 0.1860 | 1.0e+00 | clean | 0/240 |
 | A1 | full_substitution | +0.1819 | 0.3584 | 1.5e-05 | **FLAGGED** | 240/240 |
-| A2 | quantization_swap | +0.0051 | 0.1843 | 6.5e-01 | clean | 240/240 |
-| A3 | dilution | +0.0000 | 0.1858 | 5.4e-01 | clean | 30/240 |
+| A2 | quantization_swap | +0.0051 | 0.1843 | 6.4e-01 | clean | 240/240 |
+| A3 | dilution | +0.0000 | 0.1858 | 5.5e-01 | clean | 30/240 |
 | A4 | sampler_retune | +0.4243 | 0.5395 | 2.2e-11 | **FLAGGED** | 0/240 |
 | A5 | probe_aware_evasion | -0.0210 | 0.1569 | 1.0e+00 | clean | 6/240 |
 | A6 | cache_replay | +0.5560 | 0.6748 | 2.2e-11 | **FLAGGED** | 240/240 |
 | A7 | laundering | +0.1745 | 0.3530 | 1.1e-04 | **FLAGGED** | 240/240 |
 | A8 | billing_manipulation | +0.2119 | 0.4023 | 1.5e-04 | **FLAGGED** | 240/240 |
 | A9 | latency_shaping | +0.1890 | 0.3741 | 5.2e-04 | **FLAGGED** | 240/240 |
-| A10 | canary_aware | +0.2238 | 0.4123 | 1.1e-05 | **FLAGGED** | 240/240 |
+| A10 | canary_aware | +0.2238 | 0.4123 | 1.0e-05 | **FLAGGED** | 240/240 |
 | A11 | benign_quality_routing | -0.0029 | 0.1852 | 9.1e-01 | clean | 0/240 |
 
 ## Footnotes

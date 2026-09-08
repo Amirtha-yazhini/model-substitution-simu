@@ -118,16 +118,30 @@ def jensen_shannon(p: dict[str, float], q: dict[str, float]) -> float:
 
     Well-defined on disjoint supports (unlike KL), which matters: two models can
     easily share no answers at all on a low-entropy cell.
+
+    Accumulation order is fixed deliberately. Summing over `set(p) | set(q)`
+    walks the keys in an order that depends on PYTHONHASHSEED, and float
+    addition is not associative, so the same inputs produced results differing in
+    the last bits from one process to the next. That was invisible in the score
+    but flipped occasional `v >= obs` comparisons inside the permutation test,
+    which made p-values wobble between runs of an otherwise deterministic
+    pipeline. Dicts iterate in insertion order, so walking p and then q-only is
+    both deterministic and cheaper than sorting in this hot loop.
     """
-    keys = set(p) | set(q)
-    if not keys:
+    if not p and not q:
         return float("nan")
     total = 0.0
-    for k in keys:
-        pi, qi = p.get(k, 0.0), q.get(k, 0.0)
+    for k, pi in p.items():
+        qi = q.get(k, 0.0)
         mi = 0.5 * (pi + qi)
         if pi > 0:
             total += 0.5 * pi * math.log2(pi / mi)
+        if qi > 0:
+            total += 0.5 * qi * math.log2(qi / mi)
+    for k, qi in q.items():
+        if k in p:
+            continue
+        mi = 0.5 * qi          # pi is zero here
         if qi > 0:
             total += 0.5 * qi * math.log2(qi / mi)
     return max(0.0, min(1.0, total))
