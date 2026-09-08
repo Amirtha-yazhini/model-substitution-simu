@@ -1,0 +1,16 @@
+generated_at: '2026-09-08T07:50:42+00:00'
+working_models:
+  groq:
+  - openai/gpt-oss-120b
+  - openai/gpt-oss-20b
+  - qwen/qwen3.8-27b
+  - qwen/qwen3.6-27b
+  - allam-2-7b
+  - groq/compound-mini
+  google:
+  - gemini-2.5-flash
+  - gemini-3-flash-preview
+  openrouter:
+  - nvidia/nemotron-3-ultra-550b-a55b:free
+  - nvidia/nemotron-3-super-120b-a12b:free
+  - nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free

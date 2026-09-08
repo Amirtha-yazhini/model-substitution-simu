@@ -70,12 +70,19 @@ async def probe_model(
     *,
     delay_s: float,
     deep: bool,
+    max_tokens: int = 256,
 ) -> dict[str, Any]:
-    """2 calls (3 with --deep): basic, logprobs, [determinism]."""
+    """2 calls (4 with --deep): basic, logprobs, [determinism x2].
+
+    max_tokens defaults to 256, not 16. Reasoning models spend the budget on
+    hidden reasoning before emitting any content, so a 16-token cap returns an
+    empty string and looks like a broken endpoint. Measuring the reasoning cost
+    is itself a result - see `reasoning_tokens` below.
+    """
     rec: dict[str, Any] = {"provider": provider.name, "slug": slug}
 
     basic = await client.chat(
-        provider, slug, PROBE_MESSAGES, max_tokens=16, temperature=1.0
+        provider, slug, PROBE_MESSAGES, max_tokens=max_tokens, temperature=1.0
     )
     rec["works"] = basic.ok
     rec["status"] = describe(basic)
@@ -104,9 +111,22 @@ async def probe_model(
     rec["has_system_fingerprint"] = basic.system_fingerprint is not None
     rec["finish_reason"] = basic.finish_reason
 
-    # max_tokens honoured? Needed for OTE's one-word protocol to be cheap.
+    # How much of the budget went to HIDDEN REASONING before any answer?
+    # This is the cost driver for every cheap-probe auditor (OTE, KBF).
+    ctd = usage.get("completion_tokens_details") or {}
+    reasoning = ctd.get("reasoning_tokens") if isinstance(ctd, dict) else None
+    rec["reasoning_tokens"] = reasoning
+    rec["is_reasoning_model"] = bool(reasoning)
+    rec["empty_content"] = not (basic.text or "").strip()
+    rec["truncated"] = basic.finish_reason == "length"
+
     ct = usage.get("completion_tokens")
-    rec["max_tokens_honoured"] = (ct is not None and ct <= 16)
+    rec["completion_tokens"] = ct
+    # Would Bruckner's 16-token protocol have worked here?
+    rec["ote_16tok_viable"] = bool(
+        ct is not None and ct <= 16 and (basic.text or "").strip() and not reasoning
+    )
+    rec["max_tokens_honoured"] = (ct is not None and ct <= max_tokens)
 
     # Reasoning traces break single-token fingerprinting (Bruckner excluded 0.76%
     # of his census for exactly this).
@@ -116,7 +136,7 @@ async def probe_model(
 
     # RUT and DiFR live or die on this one.
     lp = await client.chat(
-        provider, slug, PROBE_MESSAGES, max_tokens=16, logprobs=True, top_logprobs=5
+        provider, slug, PROBE_MESSAGES, max_tokens=max_tokens, logprobs=True, top_logprobs=5
     )
     rec["logprobs_accepted"] = lp.ok
     rec["logprobs_returned"] = lp.ok and lp.has_logprobs
@@ -145,6 +165,7 @@ async def probe_provider(
     *,
     max_models: int,
     deep: bool,
+    max_tokens: int = 256,
 ) -> dict[str, Any]:
     rpm = provider.meta.get("documented_rpm") or 10
     delay_s = max(60.0 / float(rpm), 0.2)
@@ -177,7 +198,8 @@ async def probe_provider(
     results = []
     for slug in to_probe:
         print(f"  [{provider.name}] probing {slug} ...", flush=True)
-        rec = await probe_model(client, provider, slug, delay_s=delay_s, deep=deep)
+        rec = await probe_model(client, provider, slug, delay_s=delay_s, deep=deep,
+                                max_tokens=max_tokens)
         status = "OK" if rec.get("works") else rec.get("status")
         print(f"  [{provider.name}] {slug} -> {status}", flush=True)
         results.append(rec)
@@ -204,7 +226,7 @@ def render_coverage(report: dict[str, Any]) -> str:
 
     lines.append("\n## Per-model capabilities\n")
     lines.append(
-        "| Provider | Model | Works | usage | cached_tokens | logprobs | sys_fingerprint | max_tokens ok | reasoning leak |"
+        "| Provider | Model | Works | usage | cached_tokens | logprobs | sys_fp | reasoning tok | 16-tok probe viable |"
     )
     lines.append("|---|---|---|---|---|---|---|---|---|")
 
@@ -223,14 +245,16 @@ def render_coverage(report: dict[str, Any]) -> str:
                     f"| - | - | - | - | - | - |"
                 )
                 continue
+            rt = m.get("reasoning_tokens")
+            rt_s = str(rt) if rt else ("0" if rt == 0 else "-")
             lines.append(
                 f"| {prov['provider']} | `{m['slug']}` | yes "
                 f"| {tick(m.get('has_usage'))} "
                 f"| {tick(m.get('has_cached_tokens'))} "
                 f"| {tick(m.get('logprobs_returned'))} "
                 f"| {tick(m.get('has_system_fingerprint'))} "
-                f"| {tick(m.get('max_tokens_honoured'))} "
-                f"| {tick(m.get('leaks_reasoning'))} |"
+                f"| {rt_s} "
+                f"| {tick(m.get('ote_16tok_viable'))} |"
             )
 
     # Roll up into the number that actually matters for the paper.
@@ -244,7 +268,9 @@ def render_coverage(report: dict[str, Any]) -> str:
         n_clean = sum(1 for m in working if not m.get("leaks_reasoning"))
         lines.append("| Auditor | Requires | Applicable endpoints | Coverage |")
         lines.append("|---|---|---|---|")
-        lines.append(f"| OTE (Bruckner) | text only | {n_clean}/{n} | {n_clean/n:.0%} |")
+        n_ote16 = sum(1 for m in working if m.get("ote_16tok_viable"))
+        lines.append(f"| OTE @16 tok (as published) | no hidden reasoning | {n_ote16}/{n} | {n_ote16/n:.0%} |")
+        lines.append(f"| OTE @256 tok (adapted) | text only | {n_clean}/{n} | {n_clean/n:.0%} |")
         lines.append(f"| IRIS-lite | text only | {n}/{n} | 100% |")
         lines.append(f"| KBF | text only | {n}/{n} | 100% |")
         lines.append(f"| BENCH (Cai et al.) | text only | {n}/{n} | 100% |")
@@ -254,6 +280,32 @@ def render_coverage(report: dict[str, Any]) -> str:
         lines.append(f"| (any usage-based) | `usage` block | {n_usage}/{n} | {n_usage/n:.0%} |")
     else:
         lines.append("_No working endpoints yet - configure keys and re-run._")
+
+    if n:
+        reasoners = [m for m in working if m.get("is_reasoning_model")]
+        lines.append("\n## Finding: hidden reasoning has repriced cheap auditing\n")
+        lines.append(
+            f"{len(reasoners)}/{n} working endpoints spend tokens on hidden reasoning "
+            "before emitting any answer. Bruckner's published protocol caps completions "
+            "at 16 tokens; on a reasoning endpoint that returns an EMPTY string with "
+            "`finish_reason=length`, so the probe fails rather than answers.\n"
+        )
+        if reasoners:
+            lines.append("| Endpoint | reasoning tokens | completion tokens | answer |")
+            lines.append("|---|---|---|---|")
+            for m in reasoners:
+                lines.append(
+                    f"| {m['provider']}/`{m['slug']}` | {m.get('reasoning_tokens')} "
+                    f"| {m.get('completion_tokens')} | `{(m.get('text_sample') or '').strip()[:20]}` |"
+                )
+        lines.append(
+            "\nBruckner reported excluding 0.76% of his census for unexpected reasoning "
+            "traces. On this 2026 free-tier fleet the affected share is far larger, and "
+            "per-probe cost rises from ~16 tokens to whatever the model spends thinking. "
+            "That inflates the audit side of the break-even calculation in idea.md C3a: "
+            "the cheapest known auditing method got more expensive because the fleet "
+            "changed, not because the method changed.\n"
+        )
 
     lines.append("\n## Provider notes\n")
     for prov in report["providers"]:
@@ -309,6 +361,7 @@ async def main_async(args: argparse.Namespace) -> int:
                 probe_provider(
                     client, p, candidates.get(p.name, []),
                     max_models=args.max_models, deep=args.deep,
+                    max_tokens=args.max_tokens,
                 )
                 for p in active
             ]
@@ -357,6 +410,7 @@ def main() -> int:
     ap.add_argument("--providers", nargs="*", default=None, help="limit to these providers")
     ap.add_argument("--max-models", type=int, default=4, help="candidates per provider")
     ap.add_argument("--deep", action="store_true", help="also test temperature-0 determinism (+2 calls/model)")
+    ap.add_argument("--max-tokens", type=int, default=256, help="completion budget per probe")
     args = ap.parse_args()
     return asyncio.run(main_async(args))
 

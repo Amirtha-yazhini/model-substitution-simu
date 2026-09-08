@@ -1,91 +1,129 @@
-# Model roster: the substitution ladders SHIM will simulate.
+# Model roster: the substitution ladders SHIM simulates.
 #
-# IMPORTANT: every slug below is a CANDIDATE. Free-tier model slugs change and get
-# retired constantly. scripts/01_limits.py discovers each provider's real model list
-# via GET /models, verifies each candidate with a live completion, and writes the
-# resolved roster to config/models.resolved.yaml. Nothing downstream should read
-# THIS file - read the resolved one.
+# REBUILT 2026-09-08 from live /models listings. The first draft guessed slugs
+# from memory and every one 404'd - Llama 3.3 is gone from Groq, Cerebras now
+# requires payment (HTTP 402), and Google's slugs carry a `models/` prefix.
+# This is why slugs are discovered, never assumed.
 #
-# Ladder design principle (idea.md section 3): a ladder is only useful if BOTH rungs
-# exist on free tiers, and the substitution is economically plausible - i.e. a gateway
-# would actually save money making this swap.
+# scripts/01_limits.py verifies these and writes config/models.resolved.yaml.
+# Downstream code reads the RESOLVED file, not this one.
 
 ladders:
 
-  llama_primary:
+  gptoss_primary:
     description: >
-      Primary ladder. Large -> small within the same family, both on the two census
-      workhorses. This is the A1/A3 workhorse pair and the closest analogue to the
-      Qwen ladder IRIS used, so results are loosely comparable to theirs.
+      Primary ladder: 120B -> 20B within one family on one provider. A ~6x
+      parameter drop is exactly the economically-motivated swap a cost-cutting
+      gateway would make, and keeping it on a single provider isolates model
+      identity from infrastructure differences.
+      NOTE: both rungs are REASONING models - they spend 14-40 tokens thinking
+      before answering, so probes need max_tokens ~256, not Bruckner's 16.
     genuine:
       candidates:
-        - {provider: cerebras, slug: llama-3.3-70b}
-        - {provider: groq, slug: llama-3.3-70b-versatile}
+        - {provider: groq, slug: "openai/gpt-oss-120b"}
     substitute:
       candidates:
-        - {provider: cerebras, slug: llama3.1-8b}
-        - {provider: groq, slug: llama-3.1-8b-instant}
+        - {provider: groq, slug: "openai/gpt-oss-20b"}
     reference:
       strategy: cross_provider_consensus
-      note: >
-        No first-party Meta endpoint exists on a free tier, so ground truth is the
-        consensus across independent providers of the same weights. State this
-        limitation explicitly in the writeup - it is weaker than a true reference.
+
+  qwen_hard:
+    description: >
+      The HARD case: same parameter count, adjacent versions. Detecting this is
+      the low-margin regime where IRIS predicts Theta(1/eps^2) query complexity.
+      If an auditor separates 3.8 from 3.6 it is reading something real; if it
+      cannot, that is an honest limit worth reporting.
+    genuine:
+      candidates:
+        - {provider: groq, slug: "qwen/qwen3.8-27b"}
+    substitute:
+      candidates:
+        - {provider: groq, slug: "qwen/qwen3.6-27b"}
+    reference:
+      strategy: cross_provider_consensus
 
   mistral_clean:
     description: >
-      The clean case: a genuine FIRST-PARTY reference exists (Mistral's own API), so
-      this ladder has real ground truth rather than consensus. Low RPM (2) means it
-      must be scheduled early and run long.
+      The clean case: a genuine FIRST-PARTY reference (Mistral's own API), so
+      ground truth is real rather than consensus. Four rungs available, giving a
+      graded difficulty series. Rate-limited to 2 RPM, so schedule early and let
+      it run long.
     genuine:
       candidates:
-        - {provider: mistral, slug: mistral-large-latest}
+        - {provider: mistral, slug: mistral-medium-latest}
     substitute:
       candidates:
         - {provider: mistral, slug: mistral-small-latest}
-        - {provider: mistral, slug: open-mistral-nemo}
+        - {provider: mistral, slug: ministral-8b-latest}
+        - {provider: mistral, slug: ministral-3b-latest}
     reference:
       strategy: first_party
       provider: mistral
 
-  gemma_clean:
+  nemotron_ladder:
     description: >
-      Second first-party-reference ladder, via Google AI Studio. Also the arm most
-      likely to expose OpenAI-compat quirks, since Google's shim is only partial.
+      Three-rung ladder on OpenRouter free: 550B -> 120B -> 30B. The widest
+      capability gap available, so it should be the EASIEST arm to detect - the
+      upper bound on auditor performance. Costly in quota (50 RPD account-wide),
+      so use sparingly.
     genuine:
       candidates:
-        - {provider: google, slug: gemma-3-27b-it}
+        - {provider: openrouter, slug: "nvidia/nemotron-3-ultra-550b-a55b:free"}
     substitute:
       candidates:
-        - {provider: google, slug: gemma-3-12b-it}
-        - {provider: google, slug: gemma-3-4b-it}
+        - {provider: openrouter, slug: "nvidia/nemotron-3-super-120b-a12b:free"}
+        - {provider: openrouter, slug: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"}
+    reference:
+      strategy: cross_provider_consensus
+
+  cross_provider:
+    description: >
+      NOT a size ladder - the same nominal model on DIFFERENT providers. This is
+      the substrate for A2 (quantization swap) and A11 (benign quality routing),
+      and for the free-tier study in idea.md section 6. Differences here are real
+      ecosystem evidence, not simulation.
+    same_model_across:
+      - {provider: openrouter, slug: "google/gemma-4-31b-it:free"}
+      - {provider: google, slug: "gemma-4-31b-it"}
     reference:
       strategy: first_party
       provider: google
 
-  cross_provider:
-    description: >
-      Not a size ladder - the SAME nominal model served by DIFFERENT providers.
-      This is the substrate for arm A2 (quantization swap) and arm A11 (benign
-      quality routing), and for the free-tier study in idea.md section 6.
-      Any behavioural gap here is real-world evidence, not simulation.
-    same_model_across:
-      - {provider: cerebras, slug: llama-3.3-70b}
-      - {provider: groq, slug: llama-3.3-70b-versatile}
-      - {provider: openrouter, slug: "meta-llama/llama-3.3-70b-instruct:free"}
-      - {provider: github, slug: "meta/Llama-3.3-70B-Instruct"}
-    reference:
-      strategy: cross_provider_consensus
-
-# Extra slugs to try during discovery. The prober tests these opportunistically and
-# reports which exist; promote any survivors into a ladder above.
+# Probed by scripts/01_limits.py. Anything that answers is a candidate for
+# promotion into a ladder above.
 discovery_candidates:
-  cerebras: [llama-3.3-70b, llama3.1-8b, qwen-3-32b, qwen-3-235b-a22b-instruct]
-  groq: [llama-3.3-70b-versatile, llama-3.1-8b-instant, gemma2-9b-it, qwen/qwen3-32b]
-  mistral: [mistral-large-latest, mistral-small-latest, open-mistral-nemo, ministral-8b-latest]
-  google: [gemma-3-27b-it, gemma-3-12b-it, gemma-3-4b-it, gemini-2.0-flash]
-  github: ["openai/gpt-4o-mini", "meta/Llama-3.3-70B-Instruct", "microsoft/Phi-4"]
+  groq:
+    - "openai/gpt-oss-120b"
+    - "openai/gpt-oss-20b"
+    - "qwen/qwen3.8-27b"
+    - "qwen/qwen3.6-27b"
+    - "allam-2-7b"
+    - "groq/compound-mini"
+  mistral:
+    - mistral-medium-latest
+    - mistral-small-latest
+    - ministral-8b-latest
+    - ministral-3b-latest
+    - ministral-14b-latest
+    - magistral-small-latest
+  google:
+    - "gemini-2.5-flash"
+    - "gemini-2.5-pro"
+    - "gemini-3-flash-preview"
+    - "gemma-4-31b-it"
   openrouter:
-    - "meta-llama/llama-3.3-70b-instruct:free"
-    - "google/gemma-3-27b-it:free"
-    - "qwen/qwen3-32b:free"
+    - "nvidia/nemotron-3-ultra-550b-a55b:free"
+    - "nvidia/nemotron-3-super-120b-a12b:free"
+    - "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
+    - "google/gemma-4-31b-it:free"
+    - "thinkingmachines/inkling:free"
+    - "thinkingmachines/inkling-small:free"
+    - "poolside/laguna-s-2.1:free"
+    - "poolside/laguna-xs-2.1:free"
+  # Cerebras returns HTTP 402 (payment required) on this account as of
+  # 2026-09-08, so it is no longer the primary workhorse. Groq now carries the
+  # census. Left here in case the free tier returns.
+  cerebras:
+    - "gpt-oss-120b"
+    - "qwen-3.8-27b"
+    - "gemma-4-31b"
