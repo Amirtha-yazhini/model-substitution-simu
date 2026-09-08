@@ -23,13 +23,13 @@ See [idea.md](idea.md) for the research framing and [plan.md](plan.md) for the e
 
 ## Status
 
-Phases 0 and 1 of 8 complete. This is an in-progress build.
+Phases 0-2 of 8 complete. This is an in-progress build.
 
 | Phase | State |
 |---|---|
 | 0. Setup, capability probing | **done** — see [coverage results](results/tables/coverage.md) |
 | 1. SHIM gateway core (arms A0–A11) | **done** — all 12 arms pass acceptance tests |
-| 2. Probe census / replay corpus | not started |
+| 2. Probe census / replay corpus | **done** — recorder, replay backend, resumable census runner |
 | 3. Auditors (OTE, IRIS-lite, GATEOPS, KBF, BENCH, RUT, FUSE) | in progress — OTE done, [results](results/tables/ote_arms.md) |
 | 4. Seal thresholds (SHA-256 + git tag) | not started |
 | 5. Evaluation grid | not started |
@@ -52,6 +52,15 @@ cp .env.example .env            # then paste in your free keys
 python scripts/00_keys.py       # which keys are present? (0 API calls)
 python scripts/01_limits.py     # dry run: prints the quota plan, fires nothing
 python scripts/01_limits.py --yes
+```
+
+These need no key and spend no quota:
+
+```bash
+python scripts/02_test_arms.py         # all 12 adversary arms, invariants checked
+python scripts/03_test_ote.py          # OTE-lite vs 12 arms, calibrated at FPR<=1%
+python scripts/05_test_corpus.py       # record -> replay -> prove the replay is faithful
+python scripts/04_census.py            # prints the census budget; fires nothing without --yes
 ```
 
 All providers used are **free tiers with no credit card**. Signup links are in
@@ -113,8 +122,13 @@ shim/        the adversarial gateway (server, arm policies, quota, ledger)
 arena/       auditors, probes, e-values, frozen-threshold runner
 corpus/      committed replay corpus - what makes results reproducible offline
 results/     figures, tables, audit trail
-scripts/     00_keys  01_limits  02_census  03_calibrate  04_freeze  05_holdout  06_figures
+scripts/     00_keys  01_limits  02_test_arms  03_test_ote  04_census  05_test_corpus
+             (still to come: 06_calibrate  07_freeze  08_holdout  09_figures)
 ```
+
+Scripts numbered `*_test_*` are acceptance harnesses, not unit tests: they print a report a
+reader can judge, because `12 passed` communicates nothing about whether an adversary arm
+actually works. All three run with no API key.
 
 ## Reimplemented vs. new
 
