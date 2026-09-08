@@ -1,0 +1,91 @@
+# Model roster: the substitution ladders SHIM will simulate.
+#
+# IMPORTANT: every slug below is a CANDIDATE. Free-tier model slugs change and get
+# retired constantly. scripts/01_limits.py discovers each provider's real model list
+# via GET /models, verifies each candidate with a live completion, and writes the
+# resolved roster to config/models.resolved.yaml. Nothing downstream should read
+# THIS file - read the resolved one.
+#
+# Ladder design principle (idea.md section 3): a ladder is only useful if BOTH rungs
+# exist on free tiers, and the substitution is economically plausible - i.e. a gateway
+# would actually save money making this swap.
+
+ladders:
+
+  llama_primary:
+    description: >
+      Primary ladder. Large -> small within the same family, both on the two census
+      workhorses. This is the A1/A3 workhorse pair and the closest analogue to the
+      Qwen ladder IRIS used, so results are loosely comparable to theirs.
+    genuine:
+      candidates:
+        - {provider: cerebras, slug: llama-3.3-70b}
+        - {provider: groq, slug: llama-3.3-70b-versatile}
+    substitute:
+      candidates:
+        - {provider: cerebras, slug: llama3.1-8b}
+        - {provider: groq, slug: llama-3.1-8b-instant}
+    reference:
+      strategy: cross_provider_consensus
+      note: >
+        No first-party Meta endpoint exists on a free tier, so ground truth is the
+        consensus across independent providers of the same weights. State this
+        limitation explicitly in the writeup - it is weaker than a true reference.
+
+  mistral_clean:
+    description: >
+      The clean case: a genuine FIRST-PARTY reference exists (Mistral's own API), so
+      this ladder has real ground truth rather than consensus. Low RPM (2) means it
+      must be scheduled early and run long.
+    genuine:
+      candidates:
+        - {provider: mistral, slug: mistral-large-latest}
+    substitute:
+      candidates:
+        - {provider: mistral, slug: mistral-small-latest}
+        - {provider: mistral, slug: open-mistral-nemo}
+    reference:
+      strategy: first_party
+      provider: mistral
+
+  gemma_clean:
+    description: >
+      Second first-party-reference ladder, via Google AI Studio. Also the arm most
+      likely to expose OpenAI-compat quirks, since Google's shim is only partial.
+    genuine:
+      candidates:
+        - {provider: google, slug: gemma-3-27b-it}
+    substitute:
+      candidates:
+        - {provider: google, slug: gemma-3-12b-it}
+        - {provider: google, slug: gemma-3-4b-it}
+    reference:
+      strategy: first_party
+      provider: google
+
+  cross_provider:
+    description: >
+      Not a size ladder - the SAME nominal model served by DIFFERENT providers.
+      This is the substrate for arm A2 (quantization swap) and arm A11 (benign
+      quality routing), and for the free-tier study in idea.md section 6.
+      Any behavioural gap here is real-world evidence, not simulation.
+    same_model_across:
+      - {provider: cerebras, slug: llama-3.3-70b}
+      - {provider: groq, slug: llama-3.3-70b-versatile}
+      - {provider: openrouter, slug: "meta-llama/llama-3.3-70b-instruct:free"}
+      - {provider: github, slug: "meta/Llama-3.3-70B-Instruct"}
+    reference:
+      strategy: cross_provider_consensus
+
+# Extra slugs to try during discovery. The prober tests these opportunistically and
+# reports which exist; promote any survivors into a ladder above.
+discovery_candidates:
+  cerebras: [llama-3.3-70b, llama3.1-8b, qwen-3-32b, qwen-3-235b-a22b-instruct]
+  groq: [llama-3.3-70b-versatile, llama-3.1-8b-instant, gemma2-9b-it, qwen/qwen3-32b]
+  mistral: [mistral-large-latest, mistral-small-latest, open-mistral-nemo, ministral-8b-latest]
+  google: [gemma-3-27b-it, gemma-3-12b-it, gemma-3-4b-it, gemini-2.0-flash]
+  github: ["openai/gpt-4o-mini", "meta/Llama-3.3-70B-Instruct", "microsoft/Phi-4"]
+  openrouter:
+    - "meta-llama/llama-3.3-70b-instruct:free"
+    - "google/gemma-3-27b-it:free"
+    - "qwen/qwen3-32b:free"

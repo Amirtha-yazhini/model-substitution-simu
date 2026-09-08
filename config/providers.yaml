@@ -1,0 +1,114 @@
+# Free-tier providers. NO SECRETS HERE - keys live in .env, referenced by env_key.
+#
+# `documented_*` fields are what the provider/comparisons claim as of 2026-09-08.
+# `measured_*` fields are filled in by scripts/01_limits.py and are the ones we trust.
+# Free-tier limits change often; the measured values are the record of what was
+# actually true when the census ran.
+
+providers:
+
+  cerebras:
+    base_url: https://api.cerebras.ai/v1
+    env_key: CEREBRAS_API_KEY
+    auth: bearer
+    openai_compatible: true
+    role: primary_workhorse
+    documented_rpm: 30
+    documented_tokens_per_day: 1000000
+    signup: https://cloud.cerebras.ai
+    notes: >
+      Primary census engine. Token-budgeted rather than request-budgeted, and our
+      probes are max_tokens<=16, so the daily token cap is effectively generous.
+
+  groq:
+    base_url: https://api.groq.com/openai/v1
+    env_key: GROQ_API_KEY
+    auth: bearer
+    openai_compatible: true
+    role: secondary_workhorse
+    documented_rpm: 30
+    documented_rpd: 1000
+    signup: https://console.groq.com
+    notes: >
+      Second workhorse. Fast and low-variance, which also makes it the best source
+      for GATEOPS latency baselines (arm A9).
+
+  mistral:
+    base_url: https://api.mistral.ai/v1
+    env_key: MISTRAL_API_KEY
+    auth: bearer
+    openai_compatible: true
+    role: first_party_reference
+    reference_for: [mistral]
+    documented_rpm: 2
+    documented_tokens_per_month: 1000000000
+    signup: https://console.mistral.ai
+    notes: >
+      FIRST-PARTY REFERENCE for Mistral models - this is ground truth, not a suspect.
+      Very low RPM (2) so schedule it early and let it run long.
+      WARNING: the free Experiment tier requires opting into training on your data.
+      Send only synthetic probes; never anything sensitive.
+
+  google:
+    base_url: https://generativelanguage.googleapis.com/v1beta/openai
+    env_key: GOOGLE_API_KEY
+    auth: bearer
+    openai_compatible: partial
+    role: first_party_reference
+    reference_for: [gemma, gemini]
+    documented_rpm: 15
+    documented_rpd: 1500
+    signup: https://aistudio.google.com/apikey
+    notes: >
+      FIRST-PARTY REFERENCE for Gemma. OpenAI-compat shim exists but is partial -
+      01_limits.py must confirm logprobs/usage field behaviour rather than assume it.
+
+  github:
+    base_url: https://models.github.ai/inference
+    env_key: GITHUB_TOKEN
+    auth: bearer
+    openai_compatible: true
+    role: breadth
+    documented_rpm: 10
+    documented_rpd: 150
+    signup: https://github.com/marketplace/models
+    notes: >
+      Widest model variety (100+), lowest quota. Use for breadth across families,
+      never for deep repeat-heavy suites. High-tier models are 50 RPD, mini 150 RPD.
+
+  openrouter:
+    base_url: https://openrouter.ai/api/v1
+    env_key: OPENROUTER_API_KEY
+    auth: bearer
+    openai_compatible: true
+    role: rationed
+    documented_rpm: 20
+    documented_rpd: 50
+    signup: https://openrouter.ai/keys
+    notes: >
+      QUOTA-STARVED: 50 requests/day at zero lifetime credits, account-wide across
+      all :free models. Reserve exclusively for (a) the A11 Auto Exacto arm, which
+      only exists here, and (b) models nothing else serves. Do not spend it on OTE
+      repeats.
+
+  # --- optional overflow; enable only if the primary providers stall ---
+
+  nvidia:
+    base_url: https://integrate.api.nvidia.com/v1
+    env_key: NVIDIA_API_KEY
+    auth: bearer
+    openai_compatible: partial
+    role: overflow
+    enabled: false
+    documented_rpd: 1000
+    signup: https://build.nvidia.com
+
+  cloudflare:
+    base_url: https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/ai/v1
+    env_key: CLOUDFLARE_API_KEY
+    auth: bearer
+    openai_compatible: partial
+    role: overflow
+    enabled: false
+    documented_neurons_per_day: 10000
+    signup: https://dash.cloudflare.com

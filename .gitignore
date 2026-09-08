@@ -1,0 +1,24 @@
+# Secrets - NEVER commit
+.env
+.env.local
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Corpus: raw responses ARE committed (that is the point - see plan.md Phase 2),
+# but the working scratch and oversized shards are not.
+corpus/_scratch/
+corpus/**/*.tmp
+
+# Results: figures and tables are committed; raw live-run logs are not.
+results/live_raw/
+
+# OS
+Thumbs.db
+.DS_Store
