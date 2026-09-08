@@ -104,6 +104,9 @@ class RoutingDecision:
     serve_from_cache: bool = False              # A6
     launder: bool = False                       # A7
     launder_via: Endpoint | None = None         # A7
+    # The restyle pass must not truncate: a clipped response is itself a tell,
+    # so the laundering hop gets its own (larger) budget than the probe's.
+    launder_max_tokens: int = 256               # A7
     usage_multiplier: float = 1.0               # A8
     fake_cached_tokens: int | None = None       # A8
     inject_latency_s: float = 0.0               # A9

@@ -19,6 +19,7 @@ from __future__ import annotations
 import hashlib
 import math
 import random
+import re
 import time
 from dataclasses import dataclass, field
 from typing import Any
@@ -42,12 +43,17 @@ class MockModel:
     tokens_per_char: float = 0.28
 
     def _categorical(self, rng: random.Random, bias: dict[Any, float], universe: list[Any]) -> Any:
+        # Only bias entries that live in THIS universe count toward the listed
+        # mass. word_bias carries both colour and animal preferences, so summing
+        # it wholesale made the listed mass exceed 1, left zero spare probability
+        # and collapsed every word cell onto its mode - a point mass where the
+        # real thing has ~1 bit of entropy.
+        listed = {k: v for k, v in bias.items() if k in universe}
         weights = []
-        listed_mass = sum(bias.values())
-        spare = max(0.0, 1.0 - listed_mass)
-        per_other = spare / max(1, len(universe) - len(bias))
+        spare = max(0.0, 1.0 - sum(listed.values()))
+        per_other = spare / max(1, len(universe) - len(listed))
         for v in universe:
-            weights.append(bias.get(v, per_other))
+            weights.append(listed.get(v, per_other))
         total = sum(weights) or 1.0
         r = rng.random() * total
         acc = 0.0
@@ -166,6 +172,28 @@ MOCK_MODELS: dict[str, MockModel] = {
 }
 
 
+# A7 (laundering) sends a second, restyling pass. The mock recognises it and
+# applies the NAMED TARGET's surface habits to the payload without touching the
+# payload's content - which is precisely the attack: the answer stays the cheap
+# model's, the surface becomes the expensive model's. Semantic auditors (OTE)
+# should be unaffected; surface auditors (IRIS-lite) should be defeated.
+_RESTYLE = re.compile(
+    r"^restyle in the surface style of (?P<style>[\w.\-/:]+)\."
+    r"\s*do not change meaning:\s*(?P<payload>.*)$",
+    re.S | re.I,
+)
+
+
+def apply_surface(text: str, target: MockModel | None) -> str:
+    """Rewrite `text`'s surface conventions to match `target`. Content preserved."""
+    core = text.strip().rstrip(".").strip()
+    if core.isalpha():
+        core = core.capitalize() if (target and target.uppercase_words) else core.lower()
+    if target and target.pad_with_period:
+        core = core + "."
+    return core
+
+
 class MockBackend:
     """Drop-in stand-in for LiveBackend. Never touches the network."""
 
@@ -217,14 +245,21 @@ class MockBackend:
         )
 
         rng = self._rng(endpoint, prompt, nonce)
-        text = model.answer(prompt, rng)
+
+        restyle = _RESTYLE.match(prompt.strip())
+        if restyle:
+            text = apply_surface(
+                restyle.group("payload"), self.models.get(restyle.group("style"))
+            )
+        else:
+            text = model.answer(prompt, rng)
         latency = model.latency(rng)
 
         # Temperature actually bites: low temperature collapses onto the mode.
         # This is what makes arm A4 (sampler retune) a genuine specificity test -
         # the distribution moves while the weights stay the same.
         temp = payload.get("temperature")
-        if temp is not None and temp < 0.3:
+        if not restyle and temp is not None and temp < 0.3:
             text = model.answer(prompt, random.Random(
                 int(hashlib.sha256((model.name + prompt + "mode").encode()).hexdigest()[:16], 16)
             ))

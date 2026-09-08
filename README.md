@@ -23,14 +23,14 @@ See [idea.md](idea.md) for the research framing and [plan.md](plan.md) for the e
 
 ## Status
 
-Phase 0 of 8 complete. This is an in-progress build.
+Phases 0 and 1 of 8 complete. This is an in-progress build.
 
 | Phase | State |
 |---|---|
 | 0. Setup, capability probing | **done** — see [coverage results](results/tables/coverage.md) |
 | 1. SHIM gateway core (arms A0–A11) | **done** — all 12 arms pass acceptance tests |
 | 2. Probe census / replay corpus | not started |
-| 3. Auditors (OTE, IRIS-lite, GATEOPS, KBF, BENCH, RUT, FUSE) | in progress |
+| 3. Auditors (OTE, IRIS-lite, GATEOPS, KBF, BENCH, RUT, FUSE) | in progress — OTE done, [results](results/tables/ote_arms.md) |
 | 4. Seal thresholds (SHA-256 + git tag) | not started |
 | 5. Evaluation grid | not started |
 | 6. Live confirmation run | not started |

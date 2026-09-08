@@ -120,35 +120,65 @@ class Gateway:
 
         return out, (usage or None)
 
-    async def _launder(self, body: dict[str, Any], decision: RoutingDecision) -> dict[str, Any]:
+    async def _launder(
+        self, body: dict[str, Any], decision: RoutingDecision
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
         """A7: restyle the substitute's output to match the target's surface.
 
-        Deliberately a SURFACE operation - it never regenerates the answer, only
-        its presentation. That is precisely the attack surface IRIS-lite's
-        visible-string features expose.
+        Deliberately a SURFACE operation - the second pass never regenerates the
+        answer, only its presentation. That is precisely the attack surface
+        IRIS-lite's visible-string features expose: a laundered response should
+        keep the CHEAP model's answers while wearing the EXPENSIVE model's
+        formatting habits.
+
+        Returns (rewritten body, ledger metadata). The metadata matters: this is
+        the only arm that costs the adversary a second call, and the economics
+        analysis has to charge them for it.
         """
         target = self.ladder.genuine
+        via = decision.launder_via or self.ladder.substitute
         choices = body.get("choices") or []
         if not choices:
-            return body
+            return body, {"launder_calls": 0, "launder_ok": False}
 
         text = (choices[0].get("message") or {}).get("content") or ""
-        restyle_prompt = [{"role": "user", "content": f"Restyle, do not change meaning: {text}"}]
+        # The style target is named in the prompt: an adversary imitating a model
+        # obviously knows which model it is imitating.
+        restyle_prompt = [{
+            "role": "user",
+            "content": (
+                f"Restyle in the surface style of {target.model}. "
+                f"Do not change meaning: {text}"
+            ),
+        }]
         laundered = await self.backend.chat(
-            Endpoint(target.provider, decision.launder_via.model if decision.launder_via else target.model),
-            {"messages": restyle_prompt, "max_tokens": 16},
+            via,
+            {"messages": restyle_prompt, "max_tokens": decision.launder_max_tokens},
             nonce=self._nonce,
         )
-        if laundered.ok and laundered.text:
-            out = dict(body)
-            new_choices = [dict(c) for c in choices]
-            msg = dict(new_choices[0].get("message") or {})
-            # Strip the substitute's surface tells; adopt the target's habits.
-            msg["content"] = text.rstrip(".").strip()
-            new_choices[0]["message"] = msg
-            out["choices"] = new_choices
-            return out
-        return body
+
+        meta: dict[str, Any] = {
+            "launder_calls": 1,
+            "launder_via": str(via),
+            "launder_ok": bool(laundered.ok and laundered.text),
+            "launder_latency_s": round(laundered.latency_s, 4),
+            "launder_usage": laundered.usage or None,
+            "launder_cost_usd": self.ledger.impute_cost(str(via), laundered.usage or {}),
+        }
+
+        if not (laundered.ok and laundered.text):
+            # Failure is visible rather than silent: an unlaundered response is
+            # still a substituted one, and the ledger must say the pass did not
+            # run so the arm is not credited with an evasion it never performed.
+            return body, meta
+
+        out = dict(body)
+        new_choices = [dict(c) for c in choices]
+        msg = dict(new_choices[0].get("message") or {})
+        msg["content"] = laundered.text
+        new_choices[0]["message"] = msg
+        out["choices"] = new_choices
+        return out, meta
 
     # ------------------------------------------------------------------
 
@@ -174,11 +204,16 @@ class Gateway:
             if response.ok and response.body is not None and hasattr(self.policy, "cache_put"):
                 self.policy.cache_put(req, response.body)
 
+        launder_meta: dict[str, Any] = {}
         if response.ok and decision.launder and response.body is not None:
+            laundered_body, launder_meta = await self._launder(response.body, decision)
             response = BackendResponse(
                 ok=True,
-                body=await self._launder(response.body, decision),
-                latency_s=response.latency_s,
+                body=laundered_body,
+                # The second hop is real time on the wire. Charging it to the
+                # observed latency is what makes A7 visible to GATEOPS at all -
+                # laundering buys surface cover and pays for it in round trips.
+                latency_s=response.latency_s + float(launder_meta.get("launder_latency_s") or 0.0),
                 endpoint=response.endpoint,
             )
 
@@ -209,6 +244,7 @@ class Gateway:
             request_hash=req.body_hash,
             reported_usage=reported_usage,
             wall_latency_s=wall,
+            extra=launder_meta or None,
         )
         return client_body, row
 

@@ -36,6 +36,10 @@ ORDINARY = (
     "explain the trade-offs between idempotency keys and a transactional outbox."
 )
 CANARY = "Natalia sold clips to 48 of her friends in April, and then she sold half as many in May."
+# A word probe, not a number one: laundering is a SURFACE attack, and the mock's
+# surface tells (capitalisation, trailing period) only show up on alphabetic
+# answers. A numeric probe would pass invariant 6 vacuously.
+WORD_PROBE = "Name a colour. Reply with only one word."
 
 
 def make_req(prompt: str, *, max_tokens: int = 16, nonce: int | None = None) -> AuditRequest:
@@ -164,6 +168,56 @@ async def main() -> int:
         failures.append("A11 must actually split traffic across providers")
     else:
         print("  -> A11 splits traffic like A3 yet is not fraud. Auditors must separate these.")
+
+    # ---- invariant 6: A7 transfers SURFACE without changing the answer ----
+    print("\n" + "-" * 74)
+    print("Laundering (A7): does the restyle pass do what it claims?")
+    word_reqs = [make_req(WORD_PROBE, max_tokens=256, nonce=i) for i in range(100)]
+    a1_words = await run_arm("A1", word_reqs)
+    a7_words = await run_arm("A7", word_reqs)
+
+    def surface_tells(rows: list[dict]) -> tuple[int, int]:
+        texts = [(r["_client_text"] or "") for r in rows]
+        return (
+            sum(1 for t in texts if t.endswith(".")),
+            sum(1 for t in texts if t[:1].isupper()),
+        )
+
+    def modal_answer(rows: list[dict]) -> tuple[str, int]:
+        return Counter(
+            (r["_client_text"] or "").strip(".").lower() for r in rows
+        ).most_common(1)[0]
+
+    a1_dot, a1_cap = surface_tells(a1_words)
+    a7_dot, a7_cap = surface_tells(a7_words)
+    a1_mode, a7_mode = modal_answer(a1_words), modal_answer(a7_words)
+    print(f"  A1 (raw substitute)  trailing-period {a1_dot:>3}/100  "
+          f"capitalised {a1_cap:>3}/100  mode {a1_mode}")
+    print(f"  A7 (laundered)       trailing-period {a7_dot:>3}/100  "
+          f"capitalised {a7_cap:>3}/100  mode {a7_mode}")
+
+    # The substitute's surface habits must be gone...
+    if a7_dot or a7_cap:
+        failures.append(
+            f"A7: substitute surface tells survived laundering "
+            f"({a7_dot} periods, {a7_cap} capitalised)"
+        )
+    # ...but the cheap model's ANSWERS must survive. If they do not, the second
+    # pass regenerated the response instead of restyling it, and the arm would be
+    # testing something else entirely.
+    if a7_mode[0] != a1_mode[0]:
+        failures.append(
+            f"A7: laundering moved the answer distribution "
+            f"(A1 mode {a1_mode[0]!r} vs A7 mode {a7_mode[0]!r}) - that is regeneration"
+        )
+    # The second hop must be metered. A7 is the one arm that costs the adversary
+    # real money, which is the whole reason it is interesting to the economics.
+    unmetered = [r for r in a7_words if r.get("launder_calls") != 1 or not r.get("launder_ok")]
+    if unmetered:
+        failures.append(f"A7: {len(unmetered)}/100 rows lack a successful, metered launder hop")
+    else:
+        cost = sum(r.get("launder_cost_usd") or 0.0 for r in a7_words)
+        print(f"  launder hop charged on 100/100 rows, imputed ${cost:.6f} per 100 requests")
 
     print("\n" + "=" * 74)
     if failures:

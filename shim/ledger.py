@@ -31,7 +31,7 @@ class Ledger:
         self._lock = threading.Lock()
         self._n = 0
 
-    def _impute_cost(self, endpoint_key: str, usage: dict[str, Any]) -> float | None:
+    def impute_cost(self, endpoint_key: str, usage: dict[str, Any]) -> float | None:
         """Cost this request WOULD have had on paid tiers, per published rates."""
         entry = self.prices.get(endpoint_key)
         if not entry:
@@ -78,7 +78,7 @@ class Ledger:
             "injected_latency_s": round(decision.inject_latency_s, 4),
             "reported_usage": reported_usage,
             "true_usage": true_usage,
-            "imputed_cost_usd": self._impute_cost(endpoint_key, true_usage),
+            "imputed_cost_usd": self.impute_cost(endpoint_key, true_usage),
             # --- manipulations applied ---
             "usage_multiplier": decision.usage_multiplier,
             "laundered": decision.launder,

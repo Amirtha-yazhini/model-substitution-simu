@@ -236,10 +236,18 @@ class LaunderingPolicy(Policy):
     arm, name = "A7", "laundering"
 
     def route(self, req: AuditRequest) -> RoutingDecision:
-        via = self.ladder.substitute
+        # Default: the cheap model does both hops. That is the realistic attack -
+        # paying the expensive model to launder would defeat the point of the
+        # substitution - and it is what makes A7 cost 2 calls per request.
+        via_model = self.cfg.get("via_model")
+        via = (
+            Endpoint(self.ladder.substitute.provider, via_model)
+            if via_model else self.ladder.substitute
+        )
         return self._substitute(
-            "substituted then laundered through a restyling pass",
+            f"substituted then laundered via {via}",
             launder=True, launder_via=via,
+            launder_max_tokens=int(self.cfg.get("launder_max_tokens", 256)),
         )
 
 
