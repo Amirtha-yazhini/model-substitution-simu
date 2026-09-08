@@ -1,0 +1,36 @@
+# Canary corpus for arm A10 (canary-aware evasion).
+#
+# A10 models an adversary holding a static lookup table of PUBLIC benchmark items,
+# routing exact matches to the genuine model so accuracy-based auditors see clean
+# numbers. This seed list is representative; Phase 2 expands it with the actual
+# MMLU / GPQA / GSM8K items the BENCH auditor sends, which is the realistic case -
+# those datasets are public, finite, and trivially hashable by any gateway.
+#
+# One line per canary. Blank lines and '#' comments ignored. Matching is
+# case-insensitive substring by default (config/arms.yaml -> A10.match).
+
+# --- GSM8K-style stems ---
+Natalia sold clips to 48 of her friends in April
+Weng earns $12 an hour for babysitting
+Betty is saving money for a new wallet which costs $100
+Janet's ducks lay 16 eggs per day
+A robe takes 2 bolts of blue fiber
+
+# --- MMLU-style stems ---
+Which of the following is the body cavity that contains the pituitary gland
+What is the difference between a male and a female catheter
+In contrast to alkanes, alkenes
+Which of these branches of the trigeminal nerve contain somatic motor
+The energy for all forms of muscle contraction is provided by
+
+# --- GPQA-style stems ---
+Two quantum states with energies E1 and E2 have a lifetime of
+A dicarboxylic acid containing a cis-alkene was dehydrated
+Astronomers are studying a system of five exoplanets
+Consider a quantum mechanical system containing a particle of mass m
+
+# --- MATH-style stems ---
+What is the smallest positive perfect cube that can be written as
+Let f be the function defined by
+Find the sum of all integer bases
+If the system of equations has a solution

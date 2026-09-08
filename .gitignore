@@ -22,3 +22,8 @@ results/live_raw/
 # OS
 Thumbs.db
 .DS_Store
+
+# transient test ledgers
+results/ledger_test.jsonl
+results/ledger_http_test.jsonl
+results/quota_state.json

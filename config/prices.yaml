@@ -1,0 +1,39 @@
+# Published paid-tier prices, USD per million tokens.
+#
+# We never spend money - the census runs entirely on free tiers. These rates exist
+# so the ledger can IMPUTE what each request would have cost on a paid plan, which
+# is all the audit-economics analysis needs (idea.md C3a): the break-even dilution
+# rate eps* is a function of price ratios and query counts, not of actual spend.
+#
+# Rates are indicative public list prices as of 2026-09; they move, and exact
+# values matter less than the RATIO between a genuine model and its substitute,
+# which is what sets the adversary's savings per diluted request.
+
+endpoints:
+
+  # --- Llama ladder (primary) ---
+  "cerebras:llama-3.3-70b":       {input_per_mtok: 0.85, output_per_mtok: 1.20}
+  "groq:llama-3.3-70b-versatile": {input_per_mtok: 0.59, output_per_mtok: 0.79}
+  "cerebras:llama3.1-8b":         {input_per_mtok: 0.10, output_per_mtok: 0.10}
+  "groq:llama-3.1-8b-instant":    {input_per_mtok: 0.05, output_per_mtok: 0.08}
+
+  # --- Mistral ladder (first-party reference) ---
+  "mistral:mistral-large-latest": {input_per_mtok: 2.00, output_per_mtok: 6.00}
+  "mistral:mistral-small-latest": {input_per_mtok: 0.20, output_per_mtok: 0.60}
+  "mistral:open-mistral-nemo":    {input_per_mtok: 0.15, output_per_mtok: 0.15}
+  "mistral:ministral-8b-latest":  {input_per_mtok: 0.10, output_per_mtok: 0.10}
+
+  # --- Gemma ladder (first-party reference) ---
+  "google:gemma-3-27b-it": {input_per_mtok: 0.20, output_per_mtok: 0.40}
+  "google:gemma-3-12b-it": {input_per_mtok: 0.08, output_per_mtok: 0.16}
+  "google:gemma-3-4b-it":  {input_per_mtok: 0.03, output_per_mtok: 0.06}
+
+  # --- cross-provider (A2 / A11) ---
+  "openrouter:meta-llama/llama-3.3-70b-instruct:free": {input_per_mtok: 0.0, output_per_mtok: 0.0}
+  "github:meta/Llama-3.3-70B-Instruct":                {input_per_mtok: 0.0, output_per_mtok: 0.0}
+
+  # --- mock backend, for offline development ---
+  "mock:genuine-70b":    {input_per_mtok: 0.85, output_per_mtok: 1.20}
+  "mock:substitute-8b":  {input_per_mtok: 0.10, output_per_mtok: 0.10}
+  "mock:alternate-70b":  {input_per_mtok: 0.75, output_per_mtok: 1.00}
+  "mock:launderer":      {input_per_mtok: 0.05, output_per_mtok: 0.08}

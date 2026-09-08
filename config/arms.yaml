@@ -1,0 +1,119 @@
+# The 12 adversary arms. See idea.md section 4 (C1) for the rationale behind each.
+#
+# Ground-truth convention: `is_genuine` means THE ADVERTISED WEIGHTS WERE SERVED.
+# A11 routes to a different provider of the CORRECT model, so it is genuine=True
+# despite being structurally identical to A3. That is the confound the project is
+# about - see idea.md section 5.
+
+arms:
+
+  A0:
+    name: honest
+    kind: honest
+    description: Serve the advertised model. Control arm; source of null calibration.
+
+  A1:
+    name: full_substitution
+    kind: substitute_always
+    description: Always serve the cheaper sibling.
+
+  A2:
+    name: quantization_swap
+    kind: alternate_provider
+    description: Same nominal model, different provider at (likely) lower precision.
+    # Serves an `alternate`. Whether this counts as an identity violation is
+    # genuinely ambiguous - the weights are nominally right but the numerics may
+    # not be. Labelled genuine=False because the client's expectation is broken.
+    label_as_genuine: false
+
+  A3:
+    name: dilution
+    kind: dilution
+    description: Serve the substitute on a fraction eps of requests.
+    eps: 0.10
+    sweep: [0.02, 0.05, 0.10, 0.25, 0.50]
+
+  A4:
+    name: sampler_retune
+    kind: sampler_retune
+    description: Genuine weights, silently altered sampling parameters.
+    override_temperature: 0.2
+    override_top_p: 0.5
+    # genuine=True: the right model IS being served. If an auditor flags this as
+    # substitution, that is a specificity failure worth reporting.
+
+  A5:
+    name: probe_aware_evasion
+    kind: evasive
+    description: >
+      Route audit-shaped requests to the genuine model, everything else to the
+      substitute. Generalisation-based evasion - classifies request SHAPE, so it
+      catches probes it has never seen. Targets KBF and Bruckner's one-token method.
+    detector:
+      max_tokens_at_most: 24
+      prompt_chars_at_most: 220
+      repeat_threshold: 2          # nth+ sighting of the same prompt looks like a probe
+      closed_answer_markers:
+        - "reply with only"
+        - "only the number"
+        - "one word"
+        - "a number between"
+        - "single word"
+        - "answer with"
+        - "respond with just"
+
+  A6:
+    name: cache_replay
+    kind: cache_replay
+    description: >
+      Serve a memoised completion for a repeated prompt. Breaks every method that
+      estimates an output DISTRIBUTION by repeating the same probe.
+    underlying: substitute        # what gets cached on first sight
+
+  A7:
+    name: laundering
+    kind: launder
+    description: >
+      Cheap model generates, a second cheap pass restyles the output to match the
+      target's surface conventions. Targets IRIS-lite's visible-string features.
+      Most quota-expensive arm (2 calls/request) - first to cut.
+
+  A8:
+    name: billing_manipulation
+    kind: billing
+    description: Inflate reported usage / misreport cached tokens.
+    usage_multiplier: 1.25
+    fake_cached_tokens: 0
+    underlying: substitute
+
+  A9:
+    name: latency_shaping
+    kind: latency_shaping
+    description: >
+      Inject jitter so the mixture's latency profile mimics a single homogeneous
+      backend, defeating GateScope's CV metric.
+    underlying: substitute
+    # Match the genuine backend's profile rather than flattening to zero variance -
+    # an implausibly LOW CV is itself a tell. Baseline CV in GateScope was ~0.63.
+    target_mean_s: 0.9
+    target_cv: 0.63
+
+  A10:
+    name: canary_aware
+    kind: canary_aware
+    description: >
+      Route verbatim public-benchmark prompts to the genuine model, everything else
+      to the substitute. Memorisation-based evasion - a static lookup against a
+      finite public corpus. Defeats benchmark-based detection (Cai et al.).
+    canary_file: config/canaries.txt
+    match: substring
+
+  A11:
+    name: benign_quality_routing
+    kind: benign_routing
+    description: >
+      Round-robin among GENUINE providers of the CORRECT model, Auto-Exacto style.
+      NOT FRAUD. Scored as a false-positive arm - if auditors flag this the same
+      way they flag A3, client-side auditing cannot separate fraud from routing.
+    label_as_genuine: true
+    reweight_every: 25
