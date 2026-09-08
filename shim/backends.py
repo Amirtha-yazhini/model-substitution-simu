@@ -184,7 +184,7 @@ class Client:
                 ok=False,
                 status=r.status_code,
                 latency_s=latency,
-                error=r.text[:400],
+                error=r.text[:1200],  # generous: provider error bodies carry the real limit
             )
 
         try:

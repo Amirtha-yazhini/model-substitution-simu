@@ -54,7 +54,7 @@ async def collect(
             if body is None:
                 out.append(Observation(
                     probe_id=f"{probe.cell}#{r}", cell=probe.cell, text=None,
-                    latency_s=row.get("wall_latency_s", 0.0), ok=False,
+                    latency_s=row.get("observed_latency_s", 0.0), ok=False,
                 ))
                 continue
 
@@ -63,7 +63,7 @@ async def collect(
                 probe_id=f"{probe.cell}#{r}",
                 cell=probe.cell,
                 text=(choice.get("message") or {}).get("content"),
-                latency_s=row.get("wall_latency_s", 0.0),
+                latency_s=row.get("observed_latency_s", 0.0),
                 usage=body.get("usage") or {},
                 system_fingerprint=body.get("system_fingerprint"),
                 finish_reason=choice.get("finish_reason"),

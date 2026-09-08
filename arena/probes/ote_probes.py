@@ -12,20 +12,9 @@ string is the unit of comparison.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
-# max_tokens must survive hidden reasoning. Measured: 26-36 reasoning tokens on
-# affected endpoints, so 16 (the published value) returns an empty string.
-# See results/tables/coverage.md.
-DEFAULT_MAX_TOKENS = 256
-
-
-@dataclass(frozen=True)
-class Probe:
-    cell: str
-    prompt: str
-    max_tokens: int = DEFAULT_MAX_TOKENS
-    temperature: float = 1.0
+# Probe moved to probes/base.py once KBF and BENCH needed it too; re-exported
+# here so existing imports keep working.
+from .base import DEFAULT_MAX_TOKENS, Probe  # noqa: F401
 
 
 # Two tasks x four languages = the 8 cells. Both tasks have small, closed answer

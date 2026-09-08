@@ -41,6 +41,12 @@ class MockModel:
     pad_with_period: bool = False
     uppercase_words: bool = False
     tokens_per_char: float = 0.28
+    # Probability of recalling/answering a known-answer item correctly. This is
+    # the ONLY axis on which the mock models capability rather than style, and
+    # KBF and BENCH have no signal without it: both auditors ask whether the
+    # suspect gets things RIGHT as often as the reference does, which is a
+    # question about ability, not formatting.
+    factual_accuracy: float = 0.80
 
     def _categorical(self, rng: random.Random, bias: dict[Any, float], universe: list[Any]) -> Any:
         # Only bias entries that live in THIS universe count toward the listed
@@ -143,6 +149,7 @@ MOCK_MODELS: dict[str, MockModel] = {
         word_bias={"blue": 0.62, "dog": 0.55},
         latency_mean_s=1.10, latency_cv=0.30,
         pad_with_period=False, tokens_per_char=0.27,
+        factual_accuracy=0.86,
     ),
     "substitute-8b": MockModel(
         name="substitute-8b",
@@ -150,6 +157,7 @@ MOCK_MODELS: dict[str, MockModel] = {
         word_bias={"red": 0.58, "cat": 0.51},
         latency_mean_s=0.35, latency_cv=0.22,     # smaller model: faster
         pad_with_period=True, uppercase_words=True, tokens_per_char=0.31,
+        factual_accuracy=0.54,                    # and markedly less capable
     ),
     "alternate-70b": MockModel(
         name="alternate-70b",
@@ -161,6 +169,9 @@ MOCK_MODELS: dict[str, MockModel] = {
         word_bias={"blue": 0.59, "dog": 0.53},
         latency_mean_s=0.85, latency_cv=0.45,     # different infra: more jitter
         pad_with_period=False, tokens_per_char=0.27,
+        # Same weights as genuine, so the same ability. A11 must stay invisible
+        # to a capability-based auditor, or it would not be a real confound.
+        factual_accuracy=0.86,
     ),
     "launderer": MockModel(
         name="launderer",
@@ -168,6 +179,7 @@ MOCK_MODELS: dict[str, MockModel] = {
         word_bias={"red": 0.57},
         latency_mean_s=0.25, latency_cv=0.20,
         pad_with_period=False, tokens_per_char=0.27,   # imitates genuine's surface
+        factual_accuracy=0.54,
     ),
 }
 
@@ -182,6 +194,46 @@ _RESTYLE = re.compile(
     r"\s*do not change meaning:\s*(?P<payload>.*)$",
     re.S | re.I,
 )
+
+
+_CHOICES = ("A", "B", "C", "D")
+
+
+def answer_known_item(
+    correct: str, model: MockModel, rng: random.Random
+) -> str:
+    """Answer an item whose ground truth the mock has been given.
+
+    The mock is handed the answer key so it can simulate CAPABILITY: a large
+    model gets an item right more often than a small one. The auditor never sees
+    the key - it only sees the answers - so nothing leaks. Without this the mock
+    would answer known-answer items deterministically per model, KBF and BENCH
+    would separate the ladder perfectly on one probe, and both would look far
+    stronger than they are.
+    """
+    if rng.random() < model.factual_accuracy:
+        out = correct
+    elif correct.upper() in _CHOICES:
+        # Multiple choice: a wrong answer is one of the other letters.
+        wrong = [c for c in _CHOICES if c != correct.upper()]
+        out = rng.choice(wrong)
+    elif correct.lstrip("-").replace(".", "", 1).isdigit():
+        # Numeric: plausible near-misses, not random noise. Real models fail
+        # arithmetic by small margins far more often than by orders of magnitude.
+        try:
+            v = float(correct)
+        except ValueError:
+            return correct
+        delta = rng.choice([-3, -2, -1, 1, 2, 3, 10, -10])
+        out = str(int(v + delta)) if v == int(v) else f"{v + delta:.2f}"
+    else:
+        out = f"unknown-{rng.randrange(1000)}"
+
+    if model.uppercase_words and out.isalpha():
+        out = out.capitalize()
+    if model.pad_with_period:
+        out = out + "."
+    return out
 
 
 def apply_surface(text: str, target: MockModel | None) -> str:
@@ -203,10 +255,13 @@ class MockBackend:
         *,
         simulate_latency: bool = False,
         session_seed: int = 0,
+        answer_key: dict[str, str] | None = None,
     ):
         self.models = models or MOCK_MODELS
         self.simulate_latency = simulate_latency
         self.session_seed = session_seed
+        # prompt -> correct answer, for the KBF and BENCH suites.
+        self.answer_key = answer_key or {}
         self.calls = 0
         # Per-(model, prompt) call counter. A real endpoint at temperature 1
         # returns a DIFFERENT sample each time you send the same prompt; without
@@ -247,10 +302,13 @@ class MockBackend:
         rng = self._rng(endpoint, prompt, nonce)
 
         restyle = _RESTYLE.match(prompt.strip())
+        known = self.answer_key.get(prompt.strip())
         if restyle:
             text = apply_surface(
                 restyle.group("payload"), self.models.get(restyle.group("style"))
             )
+        elif known is not None:
+            text = answer_known_item(known, model, rng)
         else:
             text = model.answer(prompt, rng)
         latency = model.latency(rng)
@@ -259,7 +317,7 @@ class MockBackend:
         # This is what makes arm A4 (sampler retune) a genuine specificity test -
         # the distribution moves while the weights stay the same.
         temp = payload.get("temperature")
-        if not restyle and temp is not None and temp < 0.3:
+        if not restyle and known is None and temp is not None and temp < 0.3:
             text = model.answer(prompt, random.Random(
                 int(hashlib.sha256((model.name + prompt + "mode").encode()).hexdigest()[:16], 16)
             ))

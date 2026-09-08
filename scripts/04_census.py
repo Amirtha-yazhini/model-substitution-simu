@@ -15,7 +15,7 @@ Safety rails, in order of how likely each is to save the day:
   * dry run by default - prints the request budget per provider and fires nothing
   * refuses outright when a provider's plan exceeds its measured daily cap
   * resumes from the corpus, so an interrupted run re-probes only what is missing
-  * stops a provider on quota exhaustion instead of grinding through 429s
+  * retries transient rate limits with backoff, stops on terminal quota
   * records failures as records - they are the coverage metric, not noise
 
     python scripts/04_census.py                 # plan only
@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -45,13 +46,56 @@ from shim.types import Endpoint  # noqa: E402
 ROOT = Path(__file__).resolve().parent.parent
 SUITE = "ote"
 
+# ----------------------------------------------------------------------
+# A 429 means two completely different things, and the first census run
+# conflated them at a cost of roughly half the intended sample. Groq's
+# per-MINUTE limit says "Please try again in 2s" - transient, and the correct
+# response is to wait. Google's free-tier DAILY quota is terminal, and retrying
+# it only burns wall-clock. Treating both as terminal stopped four endpoints at
+# 47-103 of 240 requests each.
+# ----------------------------------------------------------------------
+
+_TERMINAL_MARKERS = (
+    "quota exhausted",              # our own QuotaManager
+    "free_tier_requests",           # google, daily
+    "exceeded your current quota",
+    "per day", "requests per day",
+    "billing", "payment required", "insufficient_quota", "insufficient credits",
+)
+_TRANSIENT_MARKERS = (
+    "requests per minute", "rpm", "try again in", "rate limit", "429",
+    "overloaded", "timeout", "temporarily", "unavailable",
+)
+
+_RETRY_AFTER = re.compile(r"try again in ([0-9.]+)\s*(ms|s)\b", re.I)
+
+
+def classify_error(error: str | None) -> tuple[str, float]:
+    """Return (kind, suggested wait seconds).
+
+    Terminal is checked FIRST. Google's daily-quota message also contains the
+    word "quota" and the substring "rate limit" in its help URL, so a
+    transient-first check would sit in a backoff loop against a budget that will
+    not reset until tomorrow.
+    """
+    err = (error or "").lower()
+    if any(m in err for m in _TERMINAL_MARKERS):
+        return "terminal", 0.0
+    if any(m in err for m in _TRANSIENT_MARKERS):
+        wait = 2.0
+        m = _RETRY_AFTER.search(err)
+        if m:
+            wait = float(m.group(1)) / (1000.0 if m.group(2).lower() == "ms" else 1.0)
+        return "transient", wait
+    return "other", 0.0
+
 
 def load_roster(mock: bool, only: list[str] | None) -> list[tuple[str, str]]:
     """The endpoints to census, as (provider, model).
 
     Live roster comes from models.resolved.yaml - the slugs that actually
     ANSWERED during capability probing - never from the candidate list, so the
-    census cannot waste quota on models we already measured as dead.
+    census cannot waste quota on models already measured as dead.
     """
     if mock:
         pairs = [("mock", m) for m in MOCK_MODELS]
@@ -117,13 +161,15 @@ def plan(roster: list[tuple[str, str]], probes: list[Probe], repeats: int,
 
 async def census_endpoint(
     backend: Any, writer: CorpusWriter, provider: str, model: str,
-    probes: list[Probe], repeats: int,
+    probes: list[Probe], repeats: int, max_retries: int = 5,
 ) -> dict[str, Any]:
     """Probe one endpoint, skipping anything already recorded."""
     endpoint = Endpoint(provider, model)
     have = writer.existing_keys(provider, model)
-    stats = {"endpoint": f"{provider}:{model}", "sent": 0, "ok": 0,
-             "failed": 0, "skipped": 0, "stopped": None}
+    stats: dict[str, Any] = {
+        "endpoint": f"{provider}:{model}", "sent": 0, "ok": 0,
+        "failed": 0, "skipped": 0, "retries": 0, "stopped": None,
+    }
 
     for probe in probes:
         for r in range(repeats):
@@ -138,8 +184,24 @@ async def census_endpoint(
                 "max_tokens": probe.max_tokens,
                 "temperature": probe.temperature,
             }
-            resp = await backend.chat(endpoint, payload, nonce=r)
-            stats["sent"] += 1
+
+            resp = None
+            kind = "other"
+            for attempt in range(max_retries + 1):
+                resp = await backend.chat(endpoint, payload, nonce=r)
+                stats["sent"] += 1
+                if resp.ok:
+                    break
+                kind, wait = classify_error(resp.error)
+                if kind != "transient" or attempt == max_retries:
+                    break
+                stats["retries"] += 1
+                # Provider's own suggestion, then exponential backoff on top.
+                await asyncio.sleep(max(wait, 1.0) * (2 ** attempt))
+
+            # Only the FINAL outcome is recorded. Writing every retry would fill
+            # the corpus with transient 429s and corrupt the coverage metric with
+            # failures that were never real.
             writer.write(
                 provider=provider, model=model, suite=SUITE, cell=probe.cell,
                 probe_id=probe_id, repeat=r, prompt=probe.prompt,
@@ -151,12 +213,10 @@ async def census_endpoint(
                 continue
 
             stats["failed"] += 1
-            err = (resp.error or "").lower()
-            # Grinding through a spent daily budget wastes wall-clock and can
-            # earn a longer ban; stop this endpoint and let the rest proceed.
-            if "quota exhausted" in err or "rate limit" in err or "429" in err:
+            if kind == "terminal":
                 stats["stopped"] = resp.error
-                print(f"  [{provider}] {model}: stopping - {resp.error}", flush=True)
+                print(f"  [{provider}] {model}: stopping (terminal) - "
+                      f"{(resp.error or '')[:140]}", flush=True)
                 return stats
             if stats["failed"] >= 10 and stats["ok"] == 0:
                 stats["stopped"] = "10 consecutive failures, no successes"
@@ -172,10 +232,13 @@ async def census_provider(backend, writer, provider, models, probes, repeats):
         print(f"  [{provider}] {model} ...", flush=True)
         st = await census_endpoint(backend, writer, provider, model, probes, repeats)
         print(f"  [{provider}] {model} -> sent {st['sent']}, ok {st['ok']}, "
-              f"failed {st['failed']}, skipped {st['skipped']}", flush=True)
+              f"failed {st['failed']}, retried {st['retries']}, "
+              f"skipped {st['skipped']}", flush=True)
         out.append(st)
-        if st["stopped"] and "quota" in (st["stopped"] or "").lower():
-            break  # the whole provider is spent, not just this model
+        if st["stopped"] and classify_error(st["stopped"])[0] == "terminal":
+            print(f"  [{provider}] daily budget spent - skipping remaining models",
+                  flush=True)
+            break
     return out
 
 
@@ -249,12 +312,13 @@ async def main_async(args: argparse.Namespace) -> int:
     sent = sum(s["sent"] for s in results)
     ok = sum(s["ok"] for s in results)
     print("\n" + "=" * 76)
-    print(f"Recorded {ok}/{sent} responses across {len(results)} endpoints.")
+    print(f"Recorded {ok} usable responses from {sent} requests "
+          f"across {len(results)} endpoints.")
     stopped = [s for s in results if s["stopped"]]
     if stopped:
         print(f"{len(stopped)} endpoint(s) stopped early - re-run to resume:")
         for s in stopped:
-            print(f"  {s['endpoint']}: {s['stopped']}")
+            print(f"  {s['endpoint']}: {(s['stopped'] or '')[:100]}")
     print(f"  corpus:   {writer.root}")
     print(f"  manifest: {manifest.relative_to(ROOT)}")
     return 0

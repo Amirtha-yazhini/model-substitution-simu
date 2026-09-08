@@ -1,0 +1,15 @@
+============================================================================
+Census plan (quota is the scarce resource - review before firing)
+============================================================================
+  suite=ote  8 cells x 30 repeats = 240 requests per endpoint
+
+  groq           686 requests  cap 1000/day    
+               openai/gpt-oss-120b (137), openai/gpt-oss-20b (161), qwen/qwen3.8-27b (153), qwen/qwen3.6-27b (235)
+
+  TOTAL: 686 requests
+
+Recording...
+
+  [groq] openai/gpt-oss-120b ...
+  [groq] openai/gpt-oss-120b -> sent 137, ok 137, failed 0, retried 0, skipped 103
+  [groq] openai/gpt-oss-20b ...

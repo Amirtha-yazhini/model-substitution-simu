@@ -231,10 +231,20 @@ class Gateway:
             )
 
         wall = time.perf_counter() - t0
-        if decision.inject_latency_s > 0 and not self.real_sleep:
-            # Book the shaped latency without actually burning wall-clock, so
-            # offline grids stay fast while GATEOPS still sees the right number.
-            wall = max(wall, decision.inject_latency_s)
+
+        # What a CLIENT would time. Not the same as `wall`, which also contains
+        # our own dispatch overhead - microseconds against a mock, and not
+        # attributable to the provider even live. Using wall here made GATEOPS
+        # measure Python execution time: its honest-vs-honest KS statistic sat at
+        # 0.49, where two samples from one distribution should give about 0.1, so
+        # the latency channel was reading harness noise rather than the backend.
+        observed_latency = response.latency_s
+        if decision.inject_latency_s > 0:
+            # A9 shapes toward a TARGET TOTAL, so the observed time is the target
+            # whenever the backend came back faster than it.
+            observed_latency = max(observed_latency, decision.inject_latency_s)
+            if not self.real_sleep:
+                wall = max(wall, decision.inject_latency_s)
 
         row = self.ledger.record(
             arm=self.arm,
@@ -244,6 +254,7 @@ class Gateway:
             request_hash=req.body_hash,
             reported_usage=reported_usage,
             wall_latency_s=wall,
+            observed_latency_s=observed_latency,
             extra=launder_meta or None,
         )
         return client_body, row

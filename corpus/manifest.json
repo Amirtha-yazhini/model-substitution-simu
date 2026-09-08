@@ -1,0 +1,71 @@
+{
+  "generated_at": "2026-09-08T15:32:11+00:00",
+  "endpoints": {
+    "google:gemini-2.5-flash": {
+      "file": "google__gemini-2.5-flash.jsonl",
+      "records": 7,
+      "ok": 6,
+      "failed": 1,
+      "cells": {
+        "rand100.en": 7
+      }
+    },
+    "groq:openai/gpt-oss-120b": {
+      "file": "groq__openai__gpt-oss-120b.jsonl",
+      "records": 103,
+      "ok": 102,
+      "failed": 1,
+      "cells": {
+        "rand100.ar": 13,
+        "rand100.en": 30,
+        "rand100.ru": 30,
+        "rand100.zh": 30
+      }
+    },
+    "groq:openai/gpt-oss-20b": {
+      "file": "groq__openai__gpt-oss-20b.jsonl",
+      "records": 79,
+      "ok": 78,
+      "failed": 1,
+      "cells": {
+        "rand100.en": 30,
+        "rand100.ru": 30,
+        "rand100.zh": 19
+      }
+    },
+    "groq:qwen/qwen3.6-27b": {
+      "file": "groq__qwen__qwen3.6-27b.jsonl",
+      "records": 5,
+      "ok": 4,
+      "failed": 1,
+      "cells": {
+        "rand100.en": 5
+      }
+    },
+    "groq:qwen/qwen3.8-27b": {
+      "file": "groq__qwen__qwen3.8-27b.jsonl",
+      "records": 87,
+      "ok": 86,
+      "failed": 1,
+      "cells": {
+        "rand100.en": 30,
+        "rand100.ru": 30,
+        "rand100.zh": 27
+      }
+    }
+  },
+  "total_records": 281,
+  "suite": "ote",
+  "repeats": 30,
+  "cells": [
+    "rand100.en",
+    "rand100.ru",
+    "rand100.zh",
+    "rand100.ar",
+    "coin.en",
+    "coin.ru",
+    "coin.zh",
+    "coin.ar"
+  ],
+  "mock": false
+}

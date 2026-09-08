@@ -62,9 +62,16 @@ class ProviderBudget:
 class QuotaManager:
     """Gate every outbound call through acquire()."""
 
-    def __init__(self, budgets: dict[str, ProviderBudget], *, persist: bool = True):
+    def __init__(self, budgets: dict[str, ProviderBudget], *, persist: bool = True,
+                 rpm_margin: float = 0.85):
         self.budgets = budgets
         self.persist = persist
+        # Pace below the documented rate, not exactly at it. Spacing requests at
+        # exactly 60/RPM puts every request on the limit boundary, where clock
+        # skew and the provider's own windowing produce 429s at a steady rate -
+        # which is what cost the first census run about half its sample. The
+        # margin is far cheaper than the retries it avoids.
+        self.rpm_margin = rpm_margin
         self._date = _today()
         if persist:
             self._load()
@@ -122,7 +129,7 @@ class QuotaManager:
                 raise QuotaExhausted(provider, b.used_today, b.spendable or 0)
 
             if b.rpm:
-                interval = 60.0 / float(b.rpm)
+                interval = 60.0 / (float(b.rpm) * self.rpm_margin)
                 now = time.monotonic()
                 wait = b._next_free - now
                 if wait > 0:

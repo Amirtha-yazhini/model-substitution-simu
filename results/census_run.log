@@ -1,0 +1,61 @@
+============================================================================
+Census plan (quota is the scarce resource - review before firing)
+============================================================================
+  suite=ote  8 cells x 30 repeats = 240 requests per endpoint
+
+  google         480 requests  cap 1500/day    
+               gemini-2.5-flash (240), gemini-3-flash-preview (240)
+  groq           960 requests  cap 1000/day    
+               openai/gpt-oss-120b (240), openai/gpt-oss-20b (240), qwen/qwen3.8-27b (240), qwen/qwen3.6-27b (240)
+
+  TOTAL: 1440 requests
+
+Recording...
+
+  [groq] openai/gpt-oss-120b ...
+  [google] gemini-2.5-flash ...
+  [google] gemini-2.5-flash: stopping - [{
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5,
+  [google] gemini-2.5-flash -> sent 7, ok 6, failed 1, skipped 0
+  [groq] openai/gpt-oss-120b: stopping - {"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m1zyrg98eev9z25ccmwjexn4` service tier `on_demand` on requests per minute (RPM): Limit 30, Used 30, Requested 1. Please try again in 2s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing","type":"requests","code":"rate_limit_exceeded"}}
+
+  [groq] openai/gpt-oss-120b -> sent 103, ok 102, failed 1, skipped 0
+  [groq] openai/gpt-oss-20b ...
+  [groq] openai/gpt-oss-20b: stopping - {"error":{"message":"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m1zyrg98eev9z25ccmwjexn4` service tier `on_demand` on requests per minute (RPM): Limit 30, Used 30, Requested 1. Please try again in 2s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing","type":"requests","code":"rate_limit_exceeded"}}
+
+  [groq] openai/gpt-oss-20b -> sent 79, ok 78, failed 1, skipped 0
+  [groq] qwen/qwen3.8-27b ...
+  [groq] qwen/qwen3.8-27b: stopping - {"error":{"message":"Rate limit reached for model `qwen/qwen3.8-27b` in organization `org_01m1zyrg98eev9z25ccmwjexn4` service tier `on_demand` on requests per minute (RPM): Limit 30, Used 30, Requested 1. Please try again in 2s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing","type":"requests","code":"rate_limit_exceeded"}}
+
+  [groq] qwen/qwen3.8-27b -> sent 87, ok 86, failed 1, skipped 0
+  [groq] qwen/qwen3.6-27b ...
+  [groq] qwen/qwen3.6-27b: stopping - {"error":{"message":"Rate limit reached for model `qwen/qwen3.6-27b` in organization `org_01m1zyrg98eev9z25ccmwjexn4` service tier `on_demand` on output tokens per minute (OTPM): Limit 1000, Used 811, Requested 217. Please try again in 1.68s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing","type":"tokens","code":"rate_limit_exceeded"}}
+
+  [groq] qwen/qwen3.6-27b -> sent 5, ok 4, failed 1, skipped 0
+
+quota @ 2026-09-08 (UTC)
+  cerebras     0 used (no daily cap)
+  google       7/1500 used, 1493 left
+  groq         274/1000 used, 726 left
+  mistral      0 used (no daily cap)
+  openrouter   0/50 used, 50 left
+
+============================================================================
+Recorded 276/281 responses across 5 endpoints.
+5 endpoint(s) stopped early - re-run to resume:
+  groq:openai/gpt-oss-120b: {"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m1zyrg98eev9z25ccmwjexn4` service tier `on_demand` on requests per minute (RPM): Limit 30, Used 30, Requested 1. Please try again in 2s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing","type":"requests","code":"rate_limit_exceeded"}}
+
+  groq:openai/gpt-oss-20b: {"error":{"message":"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m1zyrg98eev9z25ccmwjexn4` service tier `on_demand` on requests per minute (RPM): Limit 30, Used 30, Requested 1. Please try again in 2s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing","type":"requests","code":"rate_limit_exceeded"}}
+
+  groq:qwen/qwen3.8-27b: {"error":{"message":"Rate limit reached for model `qwen/qwen3.8-27b` in organization `org_01m1zyrg98eev9z25ccmwjexn4` service tier `on_demand` on requests per minute (RPM): Limit 30, Used 30, Requested 1. Please try again in 2s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing","type":"requests","code":"rate_limit_exceeded"}}
+
+  groq:qwen/qwen3.6-27b: {"error":{"message":"Rate limit reached for model `qwen/qwen3.6-27b` in organization `org_01m1zyrg98eev9z25ccmwjexn4` service tier `on_demand` on output tokens per minute (OTPM): Limit 1000, Used 811, Requested 217. Please try again in 1.68s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing","type":"tokens","code":"rate_limit_exceeded"}}
+
+  google:gemini-2.5-flash: [{
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5,
+  corpus:   D:\model-substitution-simu\corpus
+  manifest: corpus\manifest.json

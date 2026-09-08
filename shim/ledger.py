@@ -52,6 +52,7 @@ class Ledger:
         request_hash: str,
         reported_usage: dict[str, Any] | None,
         wall_latency_s: float,
+        observed_latency_s: float | None = None,
         extra: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         true_usage = response.usage
@@ -75,6 +76,11 @@ class Ledger:
             "from_cache": response.from_cache,
             "wall_latency_s": round(wall_latency_s, 4),
             "backend_latency_s": round(response.latency_s, 4),
+            # What a client would time: backend latency plus any A9 shaping, and
+            # WITHOUT our own dispatch overhead. This is the field auditors read.
+            "observed_latency_s": round(
+                response.latency_s if observed_latency_s is None else observed_latency_s, 4
+            ),
             "injected_latency_s": round(decision.inject_latency_s, 4),
             "reported_usage": reported_usage,
             "true_usage": true_usage,
