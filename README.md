@@ -23,25 +23,67 @@ See [idea.md](idea.md) for the research framing and [plan.md](plan.md) for the e
 
 ## Status
 
-Phases 0-2 of 8 complete. This is an in-progress build.
+Phases 0-5 complete, Phase 7 figures in progress, Phase 6 (live traffic) pending quota.
 
 | Phase | State |
 |---|---|
 | 0. Setup, capability probing | **done** — see [coverage results](results/tables/coverage.md) |
 | 1. SHIM gateway core (arms A0–A11) | **done** — all 12 arms pass acceptance tests |
-| 2. Probe census / replay corpus | **done** — recorder, replay backend, resumable census runner |
-| 3. Auditors (OTE, IRIS-lite, GATEOPS, KBF, BENCH, RUT, FUSE) | in progress — OTE done, [results](results/tables/ote_arms.md) |
-| 4. Seal thresholds (SHA-256 + git tag) | not started |
-| 5. Evaluation grid | not started |
-| 6. Live confirmation run | not started |
-| 7. Figures + report | not started |
+| 2. Probe census / replay corpus | **done** — 742 recorded responses across 5 endpoints ([manifest](corpus/manifest.json)) |
+| 3. Auditors (OTE, IRIS-lite, GATEOPS, KBF, BENCH, RUT, FUSE) | **done** |
+| 4. Seal thresholds (SHA-256 + git tag) | **done** — `923a3d21…`, tag `frozen-v1` |
+| 5. Evaluation grid | **done** — [decision matrix](results/tables/grid.md), [eps sweep](results/tables/eps_sweep.md), [threshold audit](results/tables/threshold_audit.md) |
+| 6. Live confirmation run | not started — needs Groq quota |
+| 7. Figures + report | figures **done** ([results/figures](results/figures)); REPORT.md not started |
+
+---
+
+## Results against the sealed protocol
+
+Every number below was scored against thresholds sealed *before* any evaluation data existed
+(`config/protocol.yaml`, SHA-256 `923a3d21…`, tag `frozen-v1`). No threshold was touched after
+sealing, including where the results are unflattering.
+
+![F2 break-even](results/figures/F2_break_even.png)
+
+**Auditing is cheap; false positives are the real constraint.** Reaching 80% detection power costs
+fractions of a cent in imputed spend, far below what a diluting gateway saves. What stops cheap
+detection is the false-positive budget: repeating an audit buys power and false alarms together.
+Counting only audits whose family false-positive rate stays at or below 5%, the smallest swept dilution
+rate that is worth catching is **eps\* = 0.1** (IRIS-lite). Below it, no admissible audit reaches
+80% power ([table](results/tables/economics.md)).
+
+![F6 the confound](results/figures/F6_confound.png)
+
+**Sanctioned routing looks more like fraud than fraud does.** A11 splits traffic across genuine
+providers of the *correct* model. GATEOPS scores it as *more* anomalous than 10% dilution with a
+cheaper model (AUROC 0.00), and under the sealed thresholds FUSE flags 15% of A11 sessions while
+flagging 0% of A3 sessions at eps=0.10. Timing- and metadata-based signals measure *heterogeneity*,
+not *substitution* ([table](results/tables/confound.md)).
+
+![F4 evasion](results/figures/F4_evasion_auroc.png)
+
+**Probe-aware evasion (A5, new here) defeats every auditor.** A gateway that routes only
+audit-shaped requests to the genuine model sits at or below chance AUROC for all six methods. So
+does canary-awareness (A10) against the benchmark auditor ([decision matrix](results/tables/grid.md)).
+
+![F5 sealed vs fresh](results/figures/F5_sealed_vs_fresh.png)
+
+**The seal held, but the calibration method leaked.** Each threshold is the maximum over 100 honest
+sessions, which bounds the false-positive rate at 0.99% *marginally*. On fresh honest blocks,
+GATEOPS' realised rate was 6–10% and BENCH's 2%. The cause is discreteness: coarse statistics
+land on steps that still carry probability mass above them
+([threshold audit](results/tables/threshold_audit.md)). A second defect: `07_grid.py` flags at
+`score >= max` where the conformal bound requires `>`. That turns ties into flags, doubling KBF's
+and BENCH's holdout rate from 2% to 4%. **Neither is fixed here.** Both are recorded as the first
+entries for a protocol v2, which would need a new seal and tag.
 
 ---
 
 ## Quickstart
 
-Once the corpus is committed (Phase 2), every figure reproduces with **no API key**. Until then,
-reproducing the capability measurement needs free keys.
+The committed corpus and results reproduce every table and figure with **no API key**. Only the
+capability measurement and the census need free keys.
 
 ```bash
 python -m venv .venv
@@ -61,6 +103,11 @@ python scripts/02_test_arms.py         # all 12 adversary arms, invariants check
 python scripts/03_test_ote.py          # OTE-lite vs 12 arms, calibrated at FPR<=1%
 python scripts/05_test_corpus.py       # record -> replay -> prove the replay is faithful
 python scripts/04_census.py            # prints the census budget; fires nothing without --yes
+
+python scripts/07_grid.py              # 12 arms x 7 auditors vs the sealed thresholds (~10 min)
+python scripts/08_threshold_audit.py    # realised FPR of each sealed threshold (~35 min)
+python scripts/09_eps_power.py         # dense dilution sweep for the economics (~3 min)
+python scripts/10_figures.py           # F1-F6 + table twins, from the results above (seconds)
 ```
 
 All providers used are **free tiers with no credit card**. Signup links are in
@@ -123,7 +170,7 @@ arena/       auditors, probes, e-values, frozen-threshold runner
 corpus/      committed replay corpus - what makes results reproducible offline
 results/     figures, tables, audit trail
 scripts/     00_keys  01_limits  02_test_arms  03_test_ote  04_census  05_test_corpus
-             (still to come: 06_calibrate  07_freeze  08_holdout  09_figures)
+             06_calibrate (seal)  07_grid  08_threshold_audit  09_eps_power  10_figures
 ```
 
 Scripts numbered `*_test_*` are acceptance harnesses, not unit tests: they print a report a

@@ -1,0 +1,13 @@
+====================================================================================
+Dense eps sweep - detection power per session, sealed thresholds
+====================================================================================
+  protocol sha256 923a3d217470a347be94fbef29f419f7...  VERIFIED
+
+  A3 eps=0.02    OTE:0%  IRIS-lite:0%  GATEOPS:5%  KBF:0%  BENCH:5%  FUSE:0%   [41s]
+  A3 eps=0.05    OTE:5%  IRIS-lite:0%  GATEOPS:35%  KBF:0%  BENCH:0%  FUSE:0%   [65s]
+  A3 eps=0.1     OTE:15%  IRIS-lite:35%  GATEOPS:100%  KBF:0%  BENCH:0%  FUSE:0%   [87s]
+  A3 eps=0.25    OTE:45%  IRIS-lite:100%  GATEOPS:100%  KBF:15%  BENCH:45%  FUSE:100%   [110s]
+  A3 eps=0.5     OTE:100%  IRIS-lite:100%  GATEOPS:100%  KBF:70%  BENCH:90%  FUSE:100%   [137s]
+  A11 (genuine)  OTE:0%  IRIS-lite:0%  GATEOPS:100%  KBF:0%  BENCH:5%  FUSE:15%   [160s]
+
+Wrote results\eps_power.jsonl (120 sessions) and results\eps_power_meta.json

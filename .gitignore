@@ -27,3 +27,9 @@ Thumbs.db
 results/ledger_test.jsonl
 results/ledger_http_test.jsonl
 results/quota_state.json
+
+# regenerable replay ledgers (40-60 MB each); grid.jsonl and tables are the record
+results/ledger_grid.jsonl
+results/ledger_probe.jsonl
+results/ledger_thraudit.jsonl
+results/ledger_eps.jsonl

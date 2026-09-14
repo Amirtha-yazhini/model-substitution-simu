@@ -1,0 +1,18 @@
+====================================================================================
+Threshold audit - realised tail mass of each sealed threshold
+====================================================================================
+  protocol 923a3d217470a347be94fbef...  claimed bound 0.99%
+
+  sealed calibration (100-199): 100 honest sessions...
+  block B (400-499): 100 honest sessions...
+  block C (9000-9099): 100 honest sessions...
+
+auditor       threshold  sealed calib       block B       block C
+------------------------------------------------------------------------------------
+OTE             +0.0152         0.0%          3.0%          0.0% 
+IRIS-lite       +0.1000         0.0%          0.0%          0.0% 
+GATEOPS         +0.1000         0.0%          9.0%          6.0% 
+KBF             +0.1600         0.0%          0.0%          1.0% 
+BENCH           +0.0167         0.0%          2.0%          2.0% 
+
+Wrote results\tables\threshold_audit.md

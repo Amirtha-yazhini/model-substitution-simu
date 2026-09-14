@@ -1,0 +1,12 @@
+{
+  "protocol_sha256": "923a3d217470a347be94fbef29f419f79f08ed9f6c6fbf506d1f7f49ebdb51c0",
+  "seeds": [
+    700,
+    719
+  ],
+  "prompt_tokens_per_session": 8865.0,
+  "completion_tokens_per_session": 495.0,
+  "genuine_session_cost_usd": 0.00812925,
+  "substitute_session_cost_usd": 0.000936,
+  "price_ratio_substitute_over_genuine": 0.11513977304179353
+}
