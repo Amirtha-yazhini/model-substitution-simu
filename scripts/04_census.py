@@ -60,7 +60,8 @@ _TERMINAL_MARKERS = (
     "free_tier_requests",           # google, daily
     "exceeded your current quota",
     "per day", "requests per day",
-    "billing", "payment required", "insufficient_quota", "insufficient credits",
+    "payment required", "insufficient_quota", "insufficient credits",
+    "billing details",              # google's daily phrasing, not a bare upsell URL
 )
 _TRANSIENT_MARKERS = (
     "requests per minute", "rpm", "try again in", "rate limit", "429",
@@ -70,23 +71,36 @@ _TRANSIENT_MARKERS = (
 _RETRY_AFTER = re.compile(r"try again in ([0-9.]+)\s*(ms|s)\b", re.I)
 
 
+# Unambiguously transient, checked BEFORE anything else. Providers put upsell
+# links in their rate-limit messages - groq's per-minute 429 ends with
+# "Upgrade to Dev Tier today at .../settings/billing" - and a terminal check
+# matching "billing" classified a 7-second wait as a spent daily budget,
+# abandoning the endpoint after 5 requests.
+_DEFINITELY_TRANSIENT = ("per minute", "try again in", "otpm", "tpm)", "rpm)")
+
+
 def classify_error(error: str | None) -> tuple[str, float]:
     """Return (kind, suggested wait seconds).
 
-    Terminal is checked FIRST. Google's daily-quota message also contains the
-    word "quota" and the substring "rate limit" in its help URL, so a
-    transient-first check would sit in a backoff loop against a budget that will
-    not reset until tomorrow.
+    Order matters, and was learned the hard way twice:
+      1. per-minute limits and explicit retry hints are transient, always
+      2. then daily / billing exhaustion, which is terminal
+      3. then the weaker transient hints
     """
     err = (error or "").lower()
+
+    def hinted_wait(default: float) -> float:
+        m = _RETRY_AFTER.search(err)
+        if not m:
+            return default
+        return float(m.group(1)) / (1000.0 if m.group(2).lower() == "ms" else 1.0)
+
+    if any(m in err for m in _DEFINITELY_TRANSIENT):
+        return "transient", hinted_wait(2.0)
     if any(m in err for m in _TERMINAL_MARKERS):
         return "terminal", 0.0
     if any(m in err for m in _TRANSIENT_MARKERS):
-        wait = 2.0
-        m = _RETRY_AFTER.search(err)
-        if m:
-            wait = float(m.group(1)) / (1000.0 if m.group(2).lower() == "ms" else 1.0)
-        return "transient", wait
+        return "transient", hinted_wait(2.0)
     return "other", 0.0
 
 
@@ -168,8 +182,10 @@ async def census_endpoint(
     have = writer.existing_keys(provider, model)
     stats: dict[str, Any] = {
         "endpoint": f"{provider}:{model}", "sent": 0, "ok": 0,
-        "failed": 0, "skipped": 0, "retries": 0, "stopped": None,
+        "failed": 0, "skipped": 0, "retries": 0, "stopped": None, "max_pace_s": 0.0,
     }
+    pace = 0.0          # adaptive inter-request delay, seconds
+    streak = 0          # consecutive successes at the current pace
 
     for probe in probes:
         for r in range(repeats):
@@ -184,6 +200,15 @@ async def census_endpoint(
                 "max_tokens": probe.max_tokens,
                 "temperature": probe.temperature,
             }
+
+            # Adaptive pacing. Groq meters qwen3.6-27b on OUTPUT TOKENS per
+            # minute (1000 OTPM) and reserves our full max_tokens=256 for each
+            # request - about four requests a minute, an axis that neither the
+            # RPM bucket nor the RPD counter models. Rather than encode every
+            # provider's metering scheme, back off until the endpoint stops
+            # complaining and drift back down once it does.
+            if pace > 0:
+                await asyncio.sleep(pace)
 
             resp = None
             kind = "other"
@@ -210,9 +235,17 @@ async def census_endpoint(
             )
             if resp.ok:
                 stats["ok"] += 1
+                streak += 1
+                if streak >= 25 and pace > 0:
+                    pace *= 0.8              # endpoint is comfortable; speed up
+                    streak = 0
                 continue
 
             stats["failed"] += 1
+            if kind == "transient":
+                streak = 0
+                pace = min(pace * 1.5 + 2.0, 25.0)
+                stats["max_pace_s"] = max(stats["max_pace_s"], pace)
             if kind == "terminal":
                 stats["stopped"] = resp.error
                 print(f"  [{provider}] {model}: stopping (terminal) - "

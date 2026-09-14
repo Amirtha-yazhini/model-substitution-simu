@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-08T15:32:11+00:00",
+  "generated_at": "2026-09-08T15:53:50+00:00",
   "endpoints": {
     "google:gemini-2.5-flash": {
       "file": "google__gemini-2.5-flash.jsonl",
@@ -12,11 +12,15 @@
     },
     "groq:openai/gpt-oss-120b": {
       "file": "groq__openai__gpt-oss-120b.jsonl",
-      "records": 103,
-      "ok": 102,
+      "records": 240,
+      "ok": 239,
       "failed": 1,
       "cells": {
-        "rand100.ar": 13,
+        "coin.ar": 30,
+        "coin.en": 30,
+        "coin.ru": 30,
+        "coin.zh": 30,
+        "rand100.ar": 30,
         "rand100.en": 30,
         "rand100.ru": 30,
         "rand100.zh": 30
@@ -24,37 +28,47 @@
     },
     "groq:openai/gpt-oss-20b": {
       "file": "groq__openai__gpt-oss-20b.jsonl",
-      "records": 79,
-      "ok": 78,
+      "records": 240,
+      "ok": 239,
       "failed": 1,
       "cells": {
+        "coin.ar": 30,
+        "coin.en": 30,
+        "coin.ru": 30,
+        "coin.zh": 30,
+        "rand100.ar": 30,
         "rand100.en": 30,
         "rand100.ru": 30,
-        "rand100.zh": 19
+        "rand100.zh": 30
       }
     },
     "groq:qwen/qwen3.6-27b": {
       "file": "groq__qwen__qwen3.6-27b.jsonl",
-      "records": 5,
-      "ok": 4,
-      "failed": 1,
+      "records": 15,
+      "ok": 12,
+      "failed": 3,
       "cells": {
-        "rand100.en": 5
+        "rand100.en": 15
       }
     },
     "groq:qwen/qwen3.8-27b": {
       "file": "groq__qwen__qwen3.8-27b.jsonl",
-      "records": 87,
-      "ok": 86,
+      "records": 240,
+      "ok": 239,
       "failed": 1,
       "cells": {
+        "coin.ar": 30,
+        "coin.en": 30,
+        "coin.ru": 30,
+        "coin.zh": 30,
+        "rand100.ar": 30,
         "rand100.en": 30,
         "rand100.ru": 30,
-        "rand100.zh": 27
+        "rand100.zh": 30
       }
     }
   },
-  "total_records": 281,
+  "total_records": 742,
   "suite": "ote",
   "repeats": 30,
   "cells": [

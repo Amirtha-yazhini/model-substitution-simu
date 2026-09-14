@@ -1,0 +1,13 @@
+============================================================================
+Census plan (quota is the scarce resource - review before firing)
+============================================================================
+  suite=ote  8 cells x 30 repeats = 240 requests per endpoint
+
+  groq           225 requests  cap 1000/day    
+               qwen/qwen3.6-27b (225)
+
+  TOTAL: 225 requests
+
+Recording...
+
+  [groq] qwen/qwen3.6-27b ...

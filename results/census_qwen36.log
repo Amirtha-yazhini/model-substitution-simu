@@ -3,33 +3,27 @@ Census plan (quota is the scarce resource - review before firing)
 ============================================================================
   suite=ote  8 cells x 30 repeats = 240 requests per endpoint
 
-  groq           686 requests  cap 1000/day    
-               openai/gpt-oss-120b (137), openai/gpt-oss-20b (161), qwen/qwen3.8-27b (153), qwen/qwen3.6-27b (235)
+  groq           230 requests  cap 1000/day    
+               qwen/qwen3.6-27b (230)
 
-  TOTAL: 686 requests
+  TOTAL: 230 requests
 
 Recording...
 
-  [groq] openai/gpt-oss-120b ...
-  [groq] openai/gpt-oss-120b -> sent 137, ok 137, failed 0, retried 0, skipped 103
-  [groq] openai/gpt-oss-20b ...
-  [groq] openai/gpt-oss-20b -> sent 161, ok 161, failed 0, retried 0, skipped 79
-  [groq] qwen/qwen3.8-27b ...
-  [groq] qwen/qwen3.8-27b -> sent 153, ok 153, failed 0, retried 0, skipped 87
   [groq] qwen/qwen3.6-27b ...
   [groq] qwen/qwen3.6-27b: stopping (terminal) - {"error":{"message":"Rate limit reached for model `qwen/qwen3.6-27b` in organization `org_01m1zyrg98eev9z25ccmwjexn4` service tier `on_deman
-  [groq] qwen/qwen3.6-27b -> sent 5, ok 4, failed 1, retried 0, skipped 5
+  [groq] qwen/qwen3.6-27b -> sent 5, ok 4, failed 1, retried 0, skipped 10
   [groq] daily budget spent - skipping remaining models
 
 quota @ 2026-09-08 (UTC)
   cerebras     0 used (no daily cap)
   google       7/1500 used, 1493 left
-  groq         730/1000 used, 270 left
+  groq         735/1000 used, 265 left
   mistral      0 used (no daily cap)
   openrouter   0/50 used, 50 left
 
 ============================================================================
-Recorded 455 usable responses from 456 requests across 4 endpoints.
+Recorded 4 usable responses from 5 requests across 1 endpoints.
 1 endpoint(s) stopped early - re-run to resume:
   groq:qwen/qwen3.6-27b: {"error":{"message":"Rate limit reached for model `qwen/qwen3.6-27b` in organization `org_01m1zyrg98
   corpus:   D:\model-substitution-simu\corpus
