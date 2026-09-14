@@ -10,7 +10,8 @@ thresholds tuned on the data it reports. None were compared against each other.
 This repository is the benchmark they should have been evaluated on.
 
 - **SHIM** — an OpenAI-compatible gateway that misbehaves on command across 12 adversary arms,
-  backed by real free-tier model responses.
+  backed by a deterministic simulated fleet (for the sealed grid), a replay corpus of real free-tier
+  responses, or live free-tier endpoints.
 - **ARENA** — auditors reimplemented from five papers, run against SHIM under a pre-registered,
   SHA-256-sealed frozen-threshold protocol.
 
@@ -23,7 +24,7 @@ See [idea.md](idea.md) for the research framing and [plan.md](plan.md) for the e
 
 ## Status
 
-Phases 0-5 complete, Phase 7 figures in progress, Phase 6 (live traffic) pending quota.
+All phases complete. The written report is [REPORT.md](REPORT.md).
 
 | Phase | State |
 |---|---|
@@ -33,8 +34,8 @@ Phases 0-5 complete, Phase 7 figures in progress, Phase 6 (live traffic) pending
 | 3. Auditors (OTE, IRIS-lite, GATEOPS, KBF, BENCH, RUT, FUSE) | **done** |
 | 4. Seal thresholds (SHA-256 + git tag) | **done** — `923a3d21…`, tag `frozen-v1` |
 | 5. Evaluation grid | **done** — [decision matrix](results/tables/grid.md), [eps sweep](results/tables/eps_sweep.md), [threshold audit](results/tables/threshold_audit.md) |
-| 6. Live confirmation run | not started — needs Groq quota |
-| 7. Figures + report | figures **done** ([results/figures](results/figures)); REPORT.md not started |
+| 6. Live confirmation run | **done** — 480/480 live requests on Groq ([live table](results/tables/live.md)) |
+| 7. Figures + report | **done** — [results/figures](results/figures), [REPORT.md](REPORT.md) |
 
 ---
 
@@ -78,6 +79,16 @@ land on steps that still carry probability mass above them
 and BENCH's holdout rate from 2% to 4%. **Neither is fixed here.** Both are recorded as the first
 entries for a protocol v2, which would need a new seal and tag.
 
+![F7 live latency](results/figures/F7_live_latency.png)
+
+**Live on Groq, timing still works, but the simulator overstated it.** Five SHIM servers served 480 live
+requests, timed from the client. The honest-vs-honest null check passed. The real speed gap between
+gpt-oss-120b and 20b is 18%, not the mock's 3x, so timing catches full substitution (p = 3e-11) at half
+the predicted strength. Latency shaping (A9) was tuned to GateScope's published 0.9 s baseline, so on a
+0.65 s endpoint it made the substitute *slower* and was still caught. Dilution at 10% passed every test,
+consistent with eps\*. Groq rotates `system_fingerprint` on honest traffic (41 distinct values in 96
+requests), so fingerprint novelty is not evidence there ([live table](results/tables/live.md)).
+
 ---
 
 ## Quickstart
@@ -108,7 +119,11 @@ python scripts/07_grid.py              # 12 arms x 7 auditors vs the sealed thre
 python scripts/08_threshold_audit.py    # realised FPR of each sealed threshold (~35 min)
 python scripts/09_eps_power.py         # dense dilution sweep for the economics (~3 min)
 python scripts/10_figures.py           # F1-F6 + table twins, from the results above (seconds)
+python scripts/11_live.py --analyze    # re-score the committed Phase 6 live run (seconds)
 ```
+
+The Phase 6 live run itself needs a free Groq key: `python scripts/11_live.py` prints its plan and
+budget (~480 requests), and only `--yes` fires.
 
 All providers used are **free tiers with no credit card**. Signup links are in
 [config/providers.yaml](config/providers.yaml).
@@ -170,7 +185,7 @@ arena/       auditors, probes, e-values, frozen-threshold runner
 corpus/      committed replay corpus - what makes results reproducible offline
 results/     figures, tables, audit trail
 scripts/     00_keys  01_limits  02_test_arms  03_test_ote  04_census  05_test_corpus
-             06_calibrate (seal)  07_grid  08_threshold_audit  09_eps_power  10_figures
+             06_calibrate (seal)  07_grid  08_threshold_audit  09_eps_power  10_figures  11_live
 ```
 
 Scripts numbered `*_test_*` are acceptance harnesses, not unit tests: they print a report a

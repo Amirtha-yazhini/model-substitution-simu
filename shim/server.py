@@ -40,11 +40,16 @@ def build_app(
     live: bool = False,
     real_sleep: bool = False,
     ledger_path: Path | None = None,
+    backend: Any | None = None,
 ) -> FastAPI:
     ladder = load_ladder(ladder_name)
     arm_cfg = load_arm_config()
 
-    if live:
+    # An injected backend lets several arm servers share one QuotaManager, so
+    # their combined traffic is metered against one provider budget (Phase 6).
+    if backend is not None:
+        pass
+    elif live:
         from .backends import Client, load_providers
 
         providers = load_providers()

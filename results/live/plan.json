@@ -1,0 +1,43 @@
+{
+  "phase": 6,
+  "written_at": "2026-09-14T03:24:57+00:00",
+  "sealed_protocol_sha256": "923a3d217470a347be94fbef29f419f79f08ed9f6c6fbf506d1f7f49ebdb51c0",
+  "ladder": "gptoss_primary",
+  "labels": [
+    "REF",
+    "A0",
+    "A1",
+    "A3",
+    "A9"
+  ],
+  "arm_of": {
+    "REF": "A0",
+    "A0": "A0",
+    "A1": "A1",
+    "A3": "A3",
+    "A9": "A9"
+  },
+  "blocked": {
+    "A11": "no second free provider of openai/gpt-oss-120b: cerebras returns HTTP 402 (re-tested 2026-09-14), openrouter lists it only as a paid slug"
+  },
+  "probes": "ote core, 8 cells",
+  "repeats": 12,
+  "requests_planned": 480,
+  "timing": "client-side httpx wall time per HTTP request to SHIM",
+  "order": "per round, every probe to every label in seeded random order",
+  "rules": {
+    "gateops_sealed": "flag if KS statistic >= 0.10000000000000003 (sealed on mock 240-vs-240; transfer test, expected to over-fire at n=96)",
+    "gateops_ks_p": "flag if two-sample KS p < 0.01 (calibration-free)",
+    "ote_sealed": "flag if debiased mean JSD >= 0.015243603567865062 (sealed on mock at 30 repeats; transfer test)",
+    "ote_fisher_p": "flag if Fisher-combined permutation p < 0.01",
+    "fingerprint": "flag if suspect shows a system_fingerprint the reference never did"
+  },
+  "null_check": "A0 vs REF must be clean under every calibration-free rule",
+  "predictions_from_mock": {
+    "A0": 0.05,
+    "A1": 0.979,
+    "A3": 0.133,
+    "A9": 0.358
+  },
+  "sha256": "ccd4af93255d2d0ade4e08cf20d85478a9ce02d260f7d0ac8b243db35fd29907"
+}

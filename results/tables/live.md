@@ -1,0 +1,32 @@
+# Phase 6: live confirmation on Groq
+
+Ladder `gptoss_primary`: advertised `openai/gpt-oss-120b`, substitute `openai/gpt-oss-20b`, both on Groq. 12 repeats x 8 OTE cells per arm, arms interleaved in random order each round, latency timed by the client over real HTTP to a SHIM server.
+
+Decision rules pre-registered in `results/live/plan.json` (SHA-256 `ccd4af93255d2d0a...`) before the first request. Sealed thresholds from protocol `923a3d217470a347...`, unmodified. **F** = flagged.
+
+## What the endpoints actually did (ground truth, from the ledgers)
+
+| Label | arm | served | substituted | client median s | client p90 s | CV | backend median s | injected median s |
+|---|---|---|---|---|---|---|---|---|
+| REF | A0 | 96 (+0 failed) | 0 | 0.656 | 0.832 | 0.57 | 0.638 | 0.000 |
+| A0 | A0 | 96 (+0 failed) | 0 | 0.695 | 0.908 | 0.70 | 0.669 | 0.000 |
+| A1 | A1 | 96 (+0 failed) | 96 | 0.538 | 0.718 | 0.79 | 0.516 | 0.000 |
+| A3 | A3 | 96 (+0 failed) | 14 | 0.650 | 0.958 | 0.61 | 0.630 | 0.000 |
+| A9 | A9 | 96 (+0 failed) | 96 | 0.870 | 1.851 | 0.99 | 0.526 | 0.708 |
+
+## Auditor decisions against REF
+
+GATEOPS sealed rule: KS >= 0.100. OTE sealed rule: debiased JSD >= 0.0152. Both were calibrated on the mock backend at larger n, so their live use is a transfer test. The `p < 0.01` columns need no calibration.
+
+| Arm | truth | GATEOPS KS | KS p | sealed | p-rule | mock KS (predicted) | novel fingerprint | OTE JSD | Fisher p | sealed | p-rule |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| A0 | genuine | 0.177 | 9.9e-02 | **F** | . | 0.050 | **F** `fp_02b0d31eca, fp_0708ac49a5, fp_0adba2bb92, fp_45f51928b5, fp_5a93aea882, fp_9d1f936695, fp_d29d1d1418` | +0.0058 | 6.5e-01 | . | . |
+| A1 | **substitution** | 0.500 | 2.9e-11 | **F** | **F** | 0.979 | **F** `fp_1074f9ce08, fp_228717f27c, fp_24bfb4a850, fp_2b688e7cc3, fp_334cc21c60, fp_34cb00738d, fp_37c9245f64, fp_3cdd24b83b, fp_4a35f7bd1b, fp_4f7e7dc26e, fp_565badff47, fp_587d0d67cc, fp_5979a0e1b7, fp_63473661d7, fp_639a5351c8, fp_66891002f6, fp_66f3850a1a, fp_75c733514d, fp_80501ff3a1, fp_84bb35977d, fp_851252edc2, fp_8b41efc9a3, fp_8d13edce1d, fp_8e23cedc90, fp_92d51d08e5, fp_9340e7d14d, fp_996f667773, fp_99996fee8e, fp_9b8528b477, fp_a12402de73, fp_a8c584dda7, fp_c5a89987dc, fp_c9afb2bdb4, fp_d6de37e6be, fp_e189667b30, fp_e23fc997ca, fp_e2cb7a84ec, fp_e594c51153, fp_e99e93f2ac, fp_ef00694abe, fp_feb9b278f1` | +0.0562 | 1.0e-01 | **F** | . |
+| A3 | **substitution** | 0.083 | 9.0e-01 | . | . | 0.133 | **F** `fp_02b0d31eca, fp_068241849b, fp_24bfb4a850, fp_334cc21c60, fp_37c9245f64, fp_4a35f7bd1b, fp_5a93aea882, fp_60e4b492db, fp_639a5351c8, fp_66891002f6, fp_84bb35977d, fp_851252edc2, fp_99996fee8e, fp_a12402de73, fp_c5a89987dc, fp_d23c14756c, fp_dc4ca88fa4` | -0.0069 | 8.4e-01 | . | . |
+| A9 | **substitution** | 0.427 | 3.1e-08 | **F** | **F** | 0.358 | **F** `fp_1c0f5282a2, fp_228717f27c, fp_24bfb4a850, fp_2b688e7cc3, fp_3023a70d60, fp_34cb00738d, fp_37c9245f64, fp_3cdd24b83b, fp_4a35f7bd1b, fp_4f7e7dc26e, fp_565badff47, fp_5979a0e1b7, fp_63473661d7, fp_639a5351c8, fp_66891002f6, fp_66f3850a1a, fp_75c733514d, fp_7d448090ba, fp_80501ff3a1, fp_84bb35977d, fp_851252edc2, fp_8d13edce1d, fp_8e23cedc90, fp_92d51d08e5, fp_9340e7d14d, fp_996f667773, fp_99996fee8e, fp_9b8528b477, fp_a12402de73, fp_a4315eb300, fp_a8c584dda7, fp_c5a89987dc, fp_c9afb2bdb4, fp_d23c14756c, fp_d3e146e1a5, fp_d6de37e6be, fp_e189667b30, fp_e23fc997ca, fp_e2cb7a84ec, fp_e594c51153, fp_ef00694abe, fp_feb9b278f1` | +0.0840 | 2.8e-02 | **F** | . |
+
+Reference fingerprints: `fp_19b184c447, fp_1d982b31b2, fp_3166198c1d, fp_4140daa9c2, fp_4200b3f836, fp_47082602e2, fp_4727af4560, fp_49bfac06f1, fp_4a19b1544c, fp_4b2f03d631, fp_5082008e34, fp_5781dfb07c, fp_5d041d5b40, fp_626f3fc5e0, fp_64b2f1c926, fp_6b677c2caf, fp_6dedd2be22, fp_77b12279f9, fp_803c0ba83d, fp_84bf0227ec, fp_854fa9be4c, fp_8a618bed98, fp_8ea50c0161, fp_90620edd96, fp_9241e9962b, fp_93703442d9, fp_a09bde29de, fp_bb691ea66b, fp_bc9a6c9b5f, fp_c15aa9c1b7, fp_c800245357, fp_c868cf1eaa, fp_ce855234b5, fp_d1bc601726, fp_dee443f41b, fp_df9620fe21, fp_e1a78f200e, fp_e5b4e54fbb, fp_f640395b96, fp_f73454f048, fp_fe269835c7`.
+
+## Blocked
+
+- **A11**: no second free provider of openai/gpt-oss-120b: cerebras returns HTTP 402 (re-tested 2026-09-14), openrouter lists it only as a paid slug. Recorded as a coverage result; not simulated.
