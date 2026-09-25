@@ -133,6 +133,11 @@ On 50 honest holdout sessions, OTE, IRIS-lite and FUSE met the 1% target (0/50).
 **Neither is fixed.** Fixing either would mean re-sealing. Both are listed as the first changes for
 a protocol v2, which would need a new hash and tag.
 
+> **Superseded by protocol v2 (see the addendum).** Re-measured on 700 more honest sessions,
+> cause 1 is wrong: the marginal conformal bound holds for discrete statistics too. GATEOPS
+> exceeds the v1 threshold on about 5% of fresh honest sessions in every block. The sealed block's
+> 0/100 was an unlucky draw (about 1 in 300). The text above is kept as v1 reported it.
+
 ### 3.4 On real recorded responses, the text signal is real
 
 The census recorded 742 real responses. For the main ladder it holds one full 240-request
@@ -303,3 +308,25 @@ requests. Without `--yes` it prints its plan and budget and fires nothing.
 
 Any live finding about a real provider claims only *statistical inconsistency with a reference*,
 never fraud. Endpoints differ for many innocent reasons.
+
+## Addendum: protocol v2 (`534a56f2…`, tag `frozen-v2`)
+
+v1 is unchanged and still reproduces. v2 was sealed before any v2 evaluation ran
+([`config/protocol_v2.yaml`](config/protocol_v2.yaml), `scripts/12`–`15`). Every number below, with
+Wilson 95% intervals, is in [`results/paper_numbers.md`](results/paper_numbers.md).
+
+- **Fixes.** Flag at `score > threshold`. Calibrate on 300 honest sessions, so the realised FPR exceeds
+  1% with probability at most 0.99^300 = 4.9%. On a 500-session holdout, every auditor's FPR is now
+  ≤ 0.8% (GATEOPS 0/500, was 10%).
+- **A fitted mock.** The second ladder draws its OTE answer distributions and latency from the census
+  and the live run. Latency is resampled with a kernel on log-latency, because a lognormal is rejected
+  (KS p < 0.001). Surface habits and accuracy stay hand-written.
+- **Scale.** 6,120 sessions: 30 per arm and 200 per dilution rate on 10 rates, on both ladders.
+- **eps\* = 0.10 on both ladders** (bootstrap 95% interval [0.10, 0.10]). IRIS-lite sets it on both.
+- **Post-hoc caveat, not sealed.** On the real census text, IRIS-lite cannot separate gpt-oss-20b from
+  120b (CV accuracy 0.46, p = 0.96), so its mock signal comes from invented surface habits. Without
+  IRIS-lite, eps\* stays 0.10 on the hand-written mock and moves to **0.15** on the fitted mock
+  (GATEOPS).
+- **Findings that hold on both ladders.** A5 stays at chance (max AUROC 0.56 / 0.61). The confound
+  strengthens: GATEOPS flags A11 on 96–100% of sessions against 5–18% for A3 at eps = 0.10. On the
+  fitted mock, FUSE flags A11 on 50% and A3 on 0%.

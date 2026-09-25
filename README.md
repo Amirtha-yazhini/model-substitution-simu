@@ -36,6 +36,7 @@ All phases complete. The written report is [REPORT.md](REPORT.md).
 | 5. Evaluation grid | **done** — [decision matrix](results/tables/grid.md), [eps sweep](results/tables/eps_sweep.md), [threshold audit](results/tables/threshold_audit.md) |
 | 6. Live confirmation run | **done** — 480/480 live requests on Groq ([live table](results/tables/live.md)) |
 | 7. Figures + report | **done** — [results/figures](results/figures), [REPORT.md](REPORT.md) |
+| v2. Protocol v2, fitted mock, CIs | **done** — `534a56f2…`, tag `frozen-v2`; [paper numbers](results/paper_numbers.md), [v2 tables](results/v2/tables) |
 
 ---
 
@@ -120,6 +121,10 @@ python scripts/08_threshold_audit.py    # realised FPR of each sealed threshold 
 python scripts/09_eps_power.py         # dense dilution sweep for the economics (~3 min)
 python scripts/10_figures.py           # F1-F6 + table twins, from the results above (seconds)
 python scripts/11_live.py --analyze    # re-score the committed Phase 6 live run (seconds)
+
+python scripts/12_fit_mock.py          # fit the mock to census + live data (seconds)
+python scripts/14_evaluate_v2.py       # protocol v2: ~6,100 sessions (~40 min on 8 cores)
+python scripts/15_paper.py             # v2 decisions, CIs, paper figures, paper_numbers.md
 ```
 
 The Phase 6 live run itself needs a free Groq key: `python scripts/11_live.py` prints its plan and
