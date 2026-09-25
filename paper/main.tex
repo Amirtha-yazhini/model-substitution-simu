@@ -1,0 +1,62 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+% Double-blind review: keep true until camera-ready.
+\newif\ifanonymous
+\anonymoustrue
+
+\usepackage{iftex}
+\ifPDFTeX % Overleaf / pdflatex; Tectonic (XeTeX) handles UTF-8 and fonts natively
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\fi
+\usepackage{amsmath,amssymb}
+\ifXeTeX % IEEE requires Times; pdflatex gets it from IEEEtran, XeTeX needs it set
+\usepackage{fontspec}
+\setmainfont{texgyretermes}[Extension=.otf, UprightFont=*-regular, BoldFont=*-bold,
+  ItalicFont=*-italic, BoldItalicFont=*-bolditalic]
+\fi
+\usepackage{cite}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+
+% Paper-style figures go in figures/; fall back to the project's result figures until then.
+\graphicspath{{figures/}{../results/figures/}}
+
+% Drafting aid: \placeholder{...} prints red text. Remove every use before submission.
+\newcommand{\placeholder}[1]{\textcolor{red}{[#1]}}
+
+% Keep PDF metadata anonymous.
+\hypersetup{pdfauthor={}, pdftitle={}, pdfsubject={}, pdfkeywords={}}
+
+\begin{document}
+
+\title{\placeholder{Working title}}
+
+\ifanonymous
+\author{\IEEEauthorblockN{Anonymous Author(s)}
+\IEEEauthorblockA{Submitted for double-blind review}}
+\else
+\author{\IEEEauthorblockN{Author Name}
+\IEEEauthorblockA{Affiliation\\Email}}
+\fi
+
+\maketitle
+
+\input{sections/00_abstract}
+\input{sections/01_introduction}
+\input{sections/02_related}
+\input{sections/03_design}
+\input{sections/04_results}
+\input{sections/05_economics}
+\input{sections/06_conclusion}
+
+% Enabled once refs.bib has its first entry (an empty bibliography does not compile).
+%\bibliographystyle{IEEEtran}
+%\bibliography{refs}
+
+\end{document}
