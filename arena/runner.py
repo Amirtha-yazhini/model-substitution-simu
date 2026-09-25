@@ -80,20 +80,37 @@ def build_auditors(*, iris_trees: int = 100, iris_splits: int = 3,
     }
 
 
-def make_gateway(arm: str, seed: int, ledger_path, arm_cfg=None) -> Gateway:
+def mock_models(ladder: str = "mock") -> dict[str, Any] | None:
+    """The model set behind a mock ladder name.
+
+    "mock" is the hand-written ladder v1 was sealed on. "mock-fit" swaps in OTE
+    answer distributions and latency fitted to the census and live run
+    (config/mock_fit.yaml, written by scripts/12_fit_mock.py).
+    """
+    if ladder == "mock":
+        return None
+    if ladder == "mock-fit":
+        from pathlib import Path
+
+        from shim.mock import load_fitted_models
+        return load_fitted_models(Path(__file__).resolve().parent.parent / "config" / "mock_fit.yaml")
+    raise KeyError(f"unknown mock ladder {ladder!r}")
+
+
+def make_gateway(arm: str, seed: int, ledger_path, arm_cfg=None, models=None) -> Gateway:
     """A gateway on a fresh mock session, seeded for reproducible independence."""
     return Gateway(
         MOCK_LADDER, arm,
-        MockBackend(session_seed=seed, answer_key=ANSWER_KEY),
+        MockBackend(models, session_seed=seed, answer_key=ANSWER_KEY),
         ledger=Ledger(path=ledger_path, prices=load_prices()),
         arm_cfg=arm_cfg if arm_cfg is not None else load_arm_config(),
     )
 
 
-async def run_session(arm: str, seed: int, ledger_path, arm_cfg=None
+async def run_session(arm: str, seed: int, ledger_path, arm_cfg=None, models=None
                       ) -> dict[str, list[Observation]]:
     """Send every suite through one arm. Returns observations keyed by suite."""
-    gw = make_gateway(arm, seed, ledger_path, arm_cfg)
+    gw = make_gateway(arm, seed, ledger_path, arm_cfg, models)
     out: dict[str, list[Observation]] = {}
     for name, (probes, repeats) in SUITE_PLAN.items():
         out[name] = await collect(gw, probes, repeats=repeats)

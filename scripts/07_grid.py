@@ -93,6 +93,10 @@ def decide(name: str, res, protocol) -> str:
     thr = ((protocol.get("thresholds") or {}).get(name) or {}).get("threshold")
     if thr is None:
         return "uninformative"
+    # v1 was sealed and run with >=, and is reproduced with it; v2 seals ">",
+    # which is what the conformal bound requires. See scripts/13_protocol_v2.py.
+    if protocol.get("decision_rule", ">=") == ">":
+        return "inconsistent" if res.score > thr else "consistent"
     return "inconsistent" if res.score >= thr else "consistent"
 
 

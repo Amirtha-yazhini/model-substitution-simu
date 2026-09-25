@@ -1,0 +1,217 @@
+protocol_version: 2
+generated_at: '2026-09-25T04:15:58+00:00'
+git_commit: ab2e05ef6994972d108c6b521d321ceb96848777
+supersedes:
+  protocol_version: 1
+  sha256: 923a3d217470a347be94fbef29f419f79f08ed9f6c6fbf506d1f7f49ebdb51c0
+  tag: frozen-v1
+  status: sealed; its results are kept and reported unchanged
+changes_from_v1:
+- 'decision rule: flag at score > threshold (v1: >=). The conformal bound is for strict
+  exceedance; >= turned ties with the max into flags.'
+- 'calibration: N=300 (v1: 100) for a training-conditional guarantee P(realised FPR
+  > 0.01) <= (1-0.01)^300; v1''s 100 gave only a marginal bound, and its GATEOPS threshold
+  drew an unlucky max.'
+- 'second ladder ''mock-fit'': OTE answer distributions and latency fitted to the
+  census and live run; its parameter file is sealed by hash.'
+- seeds, dilution grid, CI methods and economics rules sealed up front.
+alpha: 0.01
+decision_rule: '>'
+fuse_rule: e_product >= 1/alpha (Ville)
+calibration:
+  n: 300
+  estimator: max of N honest session scores
+  marginal_fpr_bound: 0.0033222591362126247
+  training_conditional:
+    claim: P(realised FPR > 0.01) <= (1-0.01)^N
+    delta: 0.04904089407128572
+conditions:
+  reference_seed: 1
+  suite_plan:
+    ote:
+      cells: 8
+      repeats: 30
+    iris:
+      cells: 4
+      repeats: 30
+    kbf:
+      cells: 15
+      repeats: 5
+    bench:
+      cells: 12
+      repeats: 5
+  queries_per_session: 495
+  auditor_suite:
+    OTE: ote
+    IRIS-lite: iris
+    GATEOPS: ote
+    KBF: kbf
+    BENCH: bench
+    RUT: ote
+  ote_permutations: 200
+  iris_trees: 100
+  iris_splits: 3
+  ladders:
+  - mock
+  - mock-fit
+sealed_inputs:
+  config/mock_fit.yaml: b085f5bcaa55c31fcda0f33b1d8977b944dc3a31d11c5ace3cb4593cc038e13f
+seeds:
+  calibration:
+  - 10000
+  - 10299
+  holdout:
+  - 30000
+  - 30499
+  grid_arms:
+  - 40000
+  - 40029
+  eps_sweep:
+  - 50000
+  - 50199
+seeds_already_seen:
+- '1'
+- 100-499
+- 500-502
+- 700-719
+- 9000-9099
+- 20000-20299 (GATEOPS-only diagnosis of the v1 leak)
+evaluation:
+  holdout: A0, every holdout seed, both ladders
+  grid: arms A0-A11, every grid_arms seed, both ladders
+  eps_sweep:
+    arm: A3
+    eps:
+    - 0.02
+    - 0.03
+    - 0.05
+    - 0.07
+    - 0.1
+    - 0.15
+    - 0.2
+    - 0.25
+    - 0.35
+    - 0.5
+    matched_benign_arm: A11 on the same seeds
+analysis:
+  rate_ci: Wilson score, 95%
+  auroc: Mann-Whitney, ties half; arm sessions vs holdout
+  power_target: 0.8
+  family_fpr_budget: 0.05
+  per_session_fpr: holdout FPR, floored at the marginal bound 1/(N+1)
+  monthly_spend_usd: 1000.0
+  eps_star: smallest swept eps at which some auditor (excluding RUT) reaches the power
+    target within its admissible session count and within the adversary's saving
+  eps_star_ci:
+    method: nonparametric bootstrap over sessions, resampling each eps batch and the
+      holdout
+    replicates: 2000
+    seed: 0
+  primary_ladder: mock (continuity with v1); mock-fit is the sensitivity analysis
+thresholds:
+  mock:
+    OTE:
+      threshold: 0.020570688496523038
+      scale: score
+      source: max of 300 honest calibration sessions
+      n_calibration: 300
+      ties_at_max: 1
+      calibration_mean: -0.006465559708348853
+      calibration_sd: 0.0087595752824306
+    IRIS-lite:
+      threshold: 0.09166666666666656
+      scale: score
+      source: max of 300 honest calibration sessions
+      n_calibration: 300
+      ties_at_max: 1
+      calibration_mean: 0.003194444444444443
+      calibration_sd: 0.01223869072249021
+    GATEOPS:
+      threshold: 0.14583333333333337
+      scale: score
+      source: max of 300 honest calibration sessions
+      n_calibration: 300
+      ties_at_max: 1
+      calibration_mean: 0.06544444444444446
+      calibration_sd: 0.02028427353286532
+    KBF:
+      threshold: 0.1333333333333333
+      scale: score
+      source: max of 300 honest calibration sessions
+      n_calibration: 300
+      ties_at_max: 2
+      calibration_mean: 0.040488888888888866
+      calibration_sd: 0.0343855912256006
+    BENCH:
+      threshold: 0.050000000000000044
+      scale: score
+      source: max of 300 honest calibration sessions
+      n_calibration: 300
+      ties_at_max: 1
+      calibration_mean: 0.000555555555555555
+      calibration_sd: 0.0042744331952136476
+    RUT:
+      threshold: null
+      n_calibration: 0
+      source: inapplicable on all 300 calibration sessions
+    FUSE:
+      threshold: 100.0
+      scale: e_value
+      source: Ville's inequality, not fitted
+  mock-fit:
+    OTE:
+      threshold: 0.022835451246263808
+      scale: score
+      source: max of 300 honest calibration sessions
+      n_calibration: 300
+      ties_at_max: 1
+      calibration_mean: -0.0013640527300104986
+      calibration_sd: 0.0061604046088906675
+    IRIS-lite:
+      threshold: 0.05833333333333335
+      scale: score
+      source: max of 300 honest calibration sessions
+      n_calibration: 300
+      ties_at_max: 2
+      calibration_mean: 0.0011388888888888879
+      calibration_sd: 0.00619792813305979
+    GATEOPS:
+      threshold: 0.13333333333333341
+      scale: score
+      source: max of 300 honest calibration sessions
+      n_calibration: 300
+      ties_at_max: 1
+      calibration_mean: 0.07258333333333333
+      calibration_sd: 0.015909282141828452
+    KBF:
+      threshold: 0.1333333333333333
+      scale: score
+      source: max of 300 honest calibration sessions
+      n_calibration: 300
+      ties_at_max: 2
+      calibration_mean: 0.040488888888888866
+      calibration_sd: 0.0343855912256006
+    BENCH:
+      threshold: 0.050000000000000044
+      scale: score
+      source: max of 300 honest calibration sessions
+      n_calibration: 300
+      ties_at_max: 1
+      calibration_mean: 0.000555555555555555
+      calibration_sd: 0.0042744331952136476
+    RUT:
+      threshold: null
+      n_calibration: 0
+      source: inapplicable on all 300 calibration sessions
+    FUSE:
+      threshold: 100.0
+      scale: e_value
+      source: Ville's inequality, not fitted
+validity_gates:
+  min_cells_ote: 8
+  applicable_false_is_uninformative: true
+  one_sided_tests: true
+  note: A method that cannot run returns uninformative, never consistent. Changing
+    any threshold after sealing requires a new protocol version and a new git tag,
+    and must be reported as such.
+sha256: 8a395d7d97d3dd4928a29d671f16c053d22139e5887131b9ff7e363ecfcb52b7

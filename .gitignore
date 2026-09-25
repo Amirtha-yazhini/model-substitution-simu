@@ -34,3 +34,8 @@ results/ledger_probe.jsonl
 results/ledger_thraudit.jsonl
 results/ledger_eps.jsonl
 results/live/ledger_*.jsonl
+
+# Paper: local LaTeX engine and build output
+paper/.tools/
+paper/build/
+results/v2/_ledger/

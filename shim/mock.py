@@ -184,6 +184,74 @@ MOCK_MODELS: dict[str, MockModel] = {
 }
 
 
+@dataclass
+class FittedMockModel(MockModel):
+    """A mock model whose OTE-cell answers are resampled from real recordings.
+
+    The hand-written models above answer every numeric prompt from one invented
+    `number_bias`. This one answers each of Bruckner's 8 cells from the empirical
+    distribution measured on a real endpoint (census + live run), keyed by the
+    exact prompt text, so language effects come from data rather than from a
+    guessed per-language shrink factor. Prompts outside those cells - the IRIS,
+    KBF and BENCH suites - fall through to the hand-written behaviour, which is
+    stated in config/mock_fit.yaml rather than implied.
+    """
+
+    # prompt -> {answer: probability}. "" stands for an unparsable reply.
+    cell_dist: dict[str, dict[str, float]] = field(default_factory=dict)
+    # Measured log-latencies and a kernel bandwidth. Real latency has a tight
+    # core and a slow tail that no single lognormal holds, so it is resampled.
+    latency_log_samples: list[float] = field(default_factory=list)
+    latency_bandwidth: float = 0.0
+
+    def latency(self, rng: random.Random) -> float:
+        if not self.latency_log_samples:
+            return super().latency(rng)
+        return math.exp(rng.choice(self.latency_log_samples)
+                        + rng.gauss(0.0, self.latency_bandwidth))
+
+    def answer(self, prompt: str, rng: random.Random) -> str:
+        dist = self.cell_dist.get(prompt)
+        if dist is None:
+            return super().answer(prompt, rng)
+        out = self._categorical(rng, dist, list(dist))
+        if not out:
+            return "(no answer)"
+        if self.uppercase_words and out.isalpha():
+            out = out.capitalize()
+        if self.pad_with_period:
+            out = out + "."
+        return out
+
+
+def load_fitted_models(path) -> dict[str, MockModel]:
+    """Build the fitted ladder from config/mock_fit.yaml (see scripts/12_fit_mock.py).
+
+    Every field the fit does not measure is copied from the hand-written model of
+    the same name, so the two ladders differ ONLY in what was fitted.
+    """
+    import dataclasses
+    from pathlib import Path
+
+    import yaml
+
+    doc = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+    out: dict[str, MockModel] = {}
+    for name, spec in doc["models"].items():
+        base = MOCK_MODELS[name]
+        fields = {f.name: getattr(base, f.name) for f in dataclasses.fields(base)}
+        fields["latency_mean_s"] = float(spec["latency"]["mean_s"])
+        fields["latency_cv"] = float(spec["latency"]["cv"])
+        out[name] = FittedMockModel(
+            **fields,
+            cell_dist={c["prompt"]: {str(k): float(v) for k, v in c["dist"].items()}
+                       for c in spec.get("cells", {}).values()},
+            latency_log_samples=[float(v) for v in spec["latency"].get("log_samples", [])],
+            latency_bandwidth=float(spec["latency"].get("bandwidth_log", 0.0)),
+        )
+    return out
+
+
 # A7 (laundering) sends a second, restyling pass. The mock recognises it and
 # applies the NAMED TARGET's surface habits to the payload without touching the
 # payload's content - which is precisely the attack: the answer stays the cheap

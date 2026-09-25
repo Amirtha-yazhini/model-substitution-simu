@@ -119,7 +119,11 @@ class Auditor(ABC):
 
         decision: Decision = "uninformative"
         if self.threshold is not None:
-            decision = "inconsistent" if raw >= self.threshold else "consistent"
+            # Strictly above. A threshold is the max of N honest scores, and the
+            # conformal bound P(fresh > max) <= 1/(N+1) is for STRICT exceedance;
+            # at >= every tie with the max becomes a flag, which on a coarse
+            # statistic doubled KBF's and BENCH's holdout FPR under protocol v1.
+            decision = "inconsistent" if raw > self.threshold else "consistent"
 
         return AuditResult(
             decision=decision, score=raw, queries=len(suspect),
