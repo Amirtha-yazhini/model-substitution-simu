@@ -5,9 +5,9 @@ inputs:
     substitute-8b: groq__openai__gpt-oss-20b.jsonl
   live: results/live/observations.jsonl
   input_sha256:
-    corpus/groq__openai__gpt-oss-120b.jsonl: f710dd173a654148a3f57da111dd6cbc3837d374ffa4f12265f846d04933eb4c
-    corpus/groq__openai__gpt-oss-20b.jsonl: fbe55f6afb3e7e0f946811d31c6456ecf97c057740241148f9940933ede5ad74
-    results/live/observations.jsonl: fd33580ed303fff6db8c0993f3efea33e2363b738fb8411310ca0e1c6185870f
+    corpus/groq__openai__gpt-oss-120b.jsonl: b7f366b70e8d754e2362c5a3116d7e8cb8ba34a7c6998781ce4e316ed16f375d
+    corpus/groq__openai__gpt-oss-20b.jsonl: f01c460765430b28b52becce8c844092e40819d67e3920f425885225a3680e45
+    results/live/observations.jsonl: c65fb28a8cf8e5431db372913ccbd32ca2b11f18891eaa45dd04127c3cf99dd6
 method:
   answers: pooled census + live, Good-Turing unseen mass spread evenly; '' = unparsable
     reply at its observed rate

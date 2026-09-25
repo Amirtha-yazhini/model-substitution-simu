@@ -1,6 +1,6 @@
 protocol_version: 2
-generated_at: '2026-09-25T04:15:58+00:00'
-git_commit: ab2e05ef6994972d108c6b521d321ceb96848777
+generated_at: '2026-09-25T04:22:14+00:00'
+git_commit: 552dbcdf7a42fbf46067449f3aad4c7c5bae6f8c
 supersedes:
   protocol_version: 1
   sha256: 923a3d217470a347be94fbef29f419f79f08ed9f6c6fbf506d1f7f49ebdb51c0
@@ -55,7 +55,7 @@ conditions:
   - mock
   - mock-fit
 sealed_inputs:
-  config/mock_fit.yaml: b085f5bcaa55c31fcda0f33b1d8977b944dc3a31d11c5ace3cb4593cc038e13f
+  config/mock_fit.yaml: ca00a0211dd6d50b7ec78c1474b1b4898a26585e4613099477dcd014dcd602c7
 seeds:
   calibration:
   - 10000
@@ -214,4 +214,4 @@ validity_gates:
   note: A method that cannot run returns uninformative, never consistent. Changing
     any threshold after sealing requires a new protocol version and a new git tag,
     and must be reported as such.
-sha256: 8a395d7d97d3dd4928a29d671f16c053d22139e5887131b9ff7e363ecfcb52b7
+sha256: 534a56f27c154bbd398ef092c9f5f03ddb24c629103b0676b9d87a9b534c0d2e

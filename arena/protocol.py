@@ -15,6 +15,7 @@ from typing import Any
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
+CRLF, LF = bytes([13, 10]), bytes([10])
 
 
 def protocol_hash(doc: dict[str, Any]) -> str:
@@ -24,7 +25,12 @@ def protocol_hash(doc: dict[str, Any]) -> str:
 
 
 def file_sha256(path: Path) -> str:
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    """SHA-256 of a text file with line endings normalised to LF.
+
+    git (core.autocrlf) stores LF and a Windows checkout writes CRLF, so a raw
+    byte hash would break the seal on every other platform.
+    """
+    return hashlib.sha256(Path(path).read_bytes().replace(CRLF, LF)).hexdigest()
 
 
 def load_sealed(path: Path) -> dict[str, Any]:

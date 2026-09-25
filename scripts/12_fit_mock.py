@@ -33,7 +33,6 @@ in what was fitted. The output is sealed into protocol v2 by its SHA-256.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import math
 import statistics
@@ -46,6 +45,7 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from arena.auditors.ote import extract_answer  # noqa: E402
+from arena.protocol import file_sha256  # noqa: E402
 from arena.probes.ote_probes import probe_set  # noqa: E402
 from shim.mock import MOCK_MODELS  # noqa: E402
 
@@ -206,7 +206,7 @@ def main() -> int:
             "corpus": {n: s["corpus"] for n, s in SOURCES.items()},
             "live": str(LIVE.relative_to(ROOT)).replace("\\", "/"),
             "input_sha256": {
-                p: hashlib.sha256((ROOT / p).read_bytes()).hexdigest()
+                p: file_sha256(ROOT / p)
                 for p in [f"corpus/{s['corpus']}" for s in SOURCES.values()]
                 + ["results/live/observations.jsonl"]
             },
@@ -225,7 +225,7 @@ def main() -> int:
         return 0
     OUT.write_text(yaml.safe_dump(doc, sort_keys=False, allow_unicode=True), encoding="utf-8")
     print(f"\nWrote {OUT.relative_to(ROOT)}  sha256 "
-          f"{hashlib.sha256(OUT.read_bytes()).hexdigest()[:16]}...")
+          f"{file_sha256(OUT)[:16]}...")
     return 0
 
 
