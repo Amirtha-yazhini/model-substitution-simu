@@ -2,34 +2,34 @@
 \section{Limitations and Conclusion}\label{sec:conclusion}
 
 \textbf{Limitations.} Five matter most.
-(i)~\emph{The grid runs on simulated models.} Calibration, holdout, grid, dilution sweep and
-confound use SHIM's mock backend. The fitted ladder takes answer distributions and latency from real
-measurements, but surface habits and accuracy remain hand-written, and the post-hoc IRIS-lite check
-shows this can move $\epsilon^*$. Real endpoints decide the coverage, real-response and live
-results; the grid's power numbers describe the mock.
-(ii)~\emph{One real session per endpoint.} Free-tier quotas bought one 240-request session per
-endpoint, so thresholds could not be calibrated on real traffic, and real-endpoint results use
-permutation p-values rather than sealed thresholds.
-(iii)~\emph{Reimplementations at reduced operating points.} None of the auditors is the authors'
-code. OTE uses 8 of 40 cells, IRIS-lite 16 of 179 features, KBF and BENCH 15 and 12 items, and
-GATEOPS omits GateScope's memory channel. Each number is a lower bound on the original method.
-(iv)~\emph{Free tier, one moment.} Groq served nearly all real traffic; other providers returned
-payment errors or exhausted daily quotas. Free tiers change monthly.
-(v)~\emph{Simulated adversaries and a small live run.} A5 is our classifier; a real one could be
-better or worse. The live run is 96 requests per arm on one provider, and benign routing could not
-run live.
+(i)~\emph{The main comparison uses simulated models.} Calibration, the honest test sessions, the
+main comparison, the cheating-rate sweep and the load-balancing comparison all use SHIM's simulator.
+The fitted pair takes its answers and speeds from real measurements, but its writing habits and
+accuracy are still hand-written, and the IRIS-lite check shows this can move $\epsilon^*$. The
+coverage, recorded-response and live results come from real endpoints; the detection rates in the
+main comparison describe the simulator.
+(ii)~\emph{One real session per endpoint.} Free quotas allowed one 240-request session per endpoint,
+so thresholds could not be set on real traffic, and the real-endpoint results use permutation
+p-values instead of the fixed thresholds.
+(iii)~\emph{Simplified rebuilds.} None of the auditors is the authors' code. OTE uses 8 of 40
+questions, IRIS-lite 16 of 179 features, KBF and BENCH 15 and 12 items, and GATEOPS leaves out
+GateScope's memory test. Each result is a lower bound on what the original method can do.
+(iv)~\emph{Free endpoints, at one point in time.} Groq served nearly all real traffic; other
+providers asked for payment or ran out of daily quota. Free tiers change every month.
+(v)~\emph{Simulated cheaters and a small live test.} A5 is our own design; a real one could be better
+or worse. The live test used 96 requests per arm on one provider, and honest load balancing could
+not be tested live.
 
-\textbf{Conclusion.} We ran five published model-substitution auditors and one new fusion on a
-common adversarial gateway under thresholds sealed before evaluation. Auditing is cheap: sessions
-cost well under a cent. It is not robust: a gateway that recognises audit-shaped requests keeps
-every auditor at chance, and the shape it recognises is what makes probes cheap. Below
-$\epsilon^* \approx 0.10$--$0.15$ no admissible audit detects dilution, because false-positive
-budgets, not cost, limit repetition. And timing auditors flag sanctioned routing more readily than
-fraud, which separates identity violations, which content can reveal, from disclosure and billing
-violations, which it cannot. Verifiable accounting for LLM APIs will need probes indistinguishable
-from production traffic, disclosure of routing, and attested metering; black-box statistics alone
-cannot supply the last two.
+\textbf{Conclusion.} We tested five published auditors and one new combined auditor against the same
+cheating gateway, with every threshold fixed before testing. Auditing is cheap: a session costs well
+under a cent. But it is not robust. A gateway that recognises test-shaped requests beats every
+auditor, and the shape it recognises is exactly what makes the tests cheap. Below a cheating rate of
+about 10--15\%, no audit can catch the gateway without too many false alarms. And timing-based
+auditors flag honest load balancing more readily than fraud. A wrong model can be caught from the
+text; undisclosed routing and a wrong bill cannot. Trustworthy billing for LLM APIs will need test
+requests that look like normal traffic, gateways that disclose their routing, and metering the
+customer can verify. Black-box testing alone cannot provide the last two.
 
-\textbf{Artifact.} The gateway, auditors, sealed protocols, replay corpus and every figure are
-available at an anonymised repository: \placeholder{anonymous.4open.science link}. All results
-except the live run regenerate without an API key.
+\textbf{Artifact.} The gateway, auditors, sealed rules, recorded responses and every figure are
+available at an anonymised repository: \placeholder{anonymous.4open.science link}. Everything except
+the live test can be rerun without an API key.

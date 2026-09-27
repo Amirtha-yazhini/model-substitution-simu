@@ -1,53 +1,54 @@
 % Converted from drafts/01_introduction.md. Budget: 0.75 pages.
 \section{Introduction and Threat Model}\label{sec:intro}
 
-A client of an LLM API names a model, pays that model's per-token price, and receives text together
-with a response that repeats the model's name. Nothing in that response is evidence. A gateway,
-reseller or router between the client and the model provider can serve a smaller model, a
-quantised copy, or a mix of both, and still return the name the client asked for. The incentive is
-large. For the token mix used in this paper, the substitute costs 11.5\% of the genuine model, so a
-gateway that swaps on one request in ten saves about \$88 per \$1,000 of billed traffic.
+When a customer calls an LLM API, they name a model and pay that model's price per token. The
+response contains text and repeats the model's name, but it proves nothing about which model
+actually produced the text. A gateway, reseller or router that sits between the customer and the
+model provider can answer with a smaller model, a compressed (quantised) copy, or a mix of models,
+and still report the name the customer asked for. The incentive is large. In our setup the cheaper
+model costs 11.5\% of the genuine one, so a gateway that swaps one request in ten saves about \$88
+for every \$1,000 the customer spends.
 
-The client pays for ``model X'', but the only record of what ran is the gateway's own word. The
-provider behind the gateway could attest to the computation in hardware~\cite{cai2025}, but
-gateways do not offer this today, and the client cannot inspect the gateway. What the client can do
-is test the responses. A black-box \emph{auditor} sends probe requests and decides, from the text,
+The customer pays for ``model X'', but the only record of what ran is the gateway's own word. The
+provider could prove what ran using secure hardware~\cite{cai2025}, but gateways do not offer this
+today, and the customer cannot look inside the gateway. What the customer can do is test the
+answers. A black-box \emph{auditor} sends test requests (\emph{probes}) and decides, from the text,
 timing and metadata that come back, whether the advertised model answered.
 
-At least eight such auditors have appeared since April 2025
+At least eight such auditors have been published since April 2025
 \cite{cai2025,zhu2025rut,lin2026gatescope,fang2026kbf,bruckner2026,iris2026,difr2025}.
-Each was evaluated on its own testbed, against its own adversary, usually with thresholds chosen on
-the data it reports. A frozen-threshold replication~\cite{holdout2026} showed how fragile that is: a
-method with perfect development accuracy fell to 50\% sensitivity on fresh model pairs, and half of
-those pairs could not be scored at all. The auditors have never been compared on one testbed
-against one adversary, and none has been tested against a gateway that knows it may be audited.
+Each was tested on its own data, against its own simulated cheater, and usually with thresholds
+chosen on the same data it reports. A replication study that fixed its thresholds in
+advance~\cite{holdout2026} showed why this matters: a method that was perfect on its development
+data caught only half of the substitutions in fresh data, and could not score half of the fresh
+cases at all. The auditors have never been compared on the same data against the same cheater, and
+none has been tested against a gateway that knows it might be audited.
 
-\textbf{Threat model.} The client sends requests over HTTPS to a gateway that advertises model $M$.
-The gateway controls routing and response metadata. For each request it may forward to $M$, to a
-cheaper substitute $M'$, to another provider of $M$, or to a cache. It may rewrite the reported
-model name, the \texttt{usage} token counts and \texttt{system\_fingerprint}, and it may add delay.
-It can read every request, so it can classify requests by their shape. It does not know the
-auditor's particular probes or thresholds, but it knows the published methods and the public
-benchmarks. Its goal is to maximise savings while keeping the probability of detection low. The
-client observes only what crosses the wire: response text, client-side latency, the \texttt{usage}
-block, the fingerprint, and logprobs where the endpoint exposes them. Timing is therefore a side
-channel the client can measure without the gateway's cooperation, and content is the only other
-signal. Honest variation, such as load balancing across legitimate providers of $M$, is allowed and
-must not be flagged.
+\textbf{Threat model.} The customer sends requests over HTTPS to a gateway that advertises model
+$M$. For each request the gateway decides where it goes: to $M$, to a cheaper substitute $M'$, to
+another provider of $M$, or to a cache of earlier answers. It can change the reported model name,
+the \texttt{usage} token counts and the \texttt{system\_fingerprint} field, and it can add delay. It
+sees every request, so it can guess which requests are tests from how they look. It does not know
+the auditor's exact probes or thresholds, but it knows the published methods and the public
+benchmarks. Its goal is to save as much as possible without being caught. The customer sees only
+what comes back: the text, how long the answer took, the \texttt{usage} block, the fingerprint, and
+token probabilities (logprobs) if the endpoint provides them. Response time is a side channel the
+customer can always measure, and the text is the only other signal. Honest variation, such as
+spreading traffic across several legitimate providers of $M$, is allowed and should not be flagged.
 
 \textbf{Contributions.}
 \begin{itemize}
-\item \emph{A shared adversarial testbed.} SHIM, an OpenAI-compatible gateway with twelve adversary
-  arms, four of which (probe-aware evasion, laundering, canary-awareness and benign routing) appear
-  in no prior evaluation, and a hidden ledger that records which backend really answered.
-\item \emph{A sealed comparison of six auditors.} Five published methods reimplemented and one new
-  e-value fusion, evaluated under thresholds hashed and tagged before evaluation, where an auditor
-  that cannot run reports \emph{uninformative}, never \emph{pass}.
-\item \emph{Measured deployability on real endpoints.} On 11 free-tier endpoints, a logprob-based
-  auditor runs on 0 and the one-token method as published on 4, because hidden reasoning consumes
-  the token budget.
-\item \emph{Three negative results.} Probe-aware evasion keeps every auditor at chance.
-  False-positive budgets, not audit cost, set a dilution floor of $\epsilon^* \approx 0.10$. Timing
-  auditors cannot tell fraud from sanctioned routing, which splits ``substitution'' into identity,
-  disclosure and billing violations.
+\item \emph{A shared test gateway.} SHIM, a drop-in OpenAI-compatible gateway that can cheat in
+  twelve ways. Four of them (hiding from tests, restyling cheap answers, recognising benchmark
+  questions, and honest load balancing) have never been evaluated before. A hidden log records which
+  model really answered each request.
+\item \emph{A fair comparison of six auditors.} Five published methods, rebuilt from their papers,
+  and one new method that combines them. All thresholds were fixed and fingerprinted before testing,
+  and an auditor that cannot run reports \emph{uninformative}, never \emph{pass}.
+\item \emph{Which auditors work on real endpoints.} On 11 free endpoints, a method that needs token
+  probabilities runs on none, and the cheapest published method runs as described on only 4,
+  because models now ``think'' silently before answering.
+\item \emph{Three negative results.} A gateway that hides from tests beats every auditor. False
+  alarms, not cost, mean nobody can catch cheating on fewer than about 10\% of requests. And
+  timing-based auditors cannot tell cheating from honest load balancing.
 \end{itemize}

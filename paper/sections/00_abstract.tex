@@ -1,14 +1,15 @@
 % Converted from drafts/00_abstract.md. Budget: ~150 words.
 \begin{abstract}
-LLM APIs bill for a named model, but nothing in a response proves which model produced it. An
-intermediary can serve a cheaper model on some requests and still bill for the expensive one. At
-least eight black-box detectors have been proposed, each evaluated on its own testbed and against
-its own adversary. We built SHIM, an OpenAI-compatible gateway with twelve switchable cheating
-strategies and a hidden ground-truth ledger, and ARENA, which runs five reimplemented detectors and
-a new e-value fusion under thresholds sealed by SHA-256 before evaluation. On 11 free-tier
-endpoints, the logprob-based detector runs on none and the one-token method as published on 4. A
-gateway that answers audit-shaped requests honestly keeps every detector at chance
-(AUROC~$\le$~0.61). Audits cost under one cent, yet no admissible audit detects substitution on
-fewer than 10\% of requests, which still saves the gateway 8.8\% of the bill. Timing detectors also
-flag benign load balancing more often than fraud.
+When a customer pays for an LLM API, they pay for a named model, but nothing in the response proves
+which model actually answered. A gateway between the customer and the provider can quietly send
+some requests to a cheaper model and still charge full price. At least eight methods have been
+proposed to catch this, but each was tested on its own data against its own simulated cheater. We
+built SHIM, a drop-in API gateway that can cheat in twelve ways and secretly records which model
+really answered, and ARENA, which runs five published detectors and one new combined detector
+against it. All thresholds were fixed and fingerprinted before any test ran. Two detectors cannot
+run on most real free endpoints (0 and 4 of 11). A gateway that answers honestly only when a request
+looks like a test beats every detector (AUROC~$\le$~0.61, near a coin flip). Audits cost under one
+cent, yet no detector catches cheating on fewer than 10\% of requests without too many false alarms,
+and that still saves the gateway 8.8\% of the bill. Timing-based detectors also flag honest load
+balancing more often than real cheating.
 \end{abstract}

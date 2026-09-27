@@ -1,94 +1,99 @@
 % Converted from drafts/03_design.md. Budget: 1.0 page.
 \section{System Design}\label{sec:design}
 
-The testbed has two parts: SHIM, a gateway that cheats in controlled ways, and ARENA, which runs
-auditors against it under a sealed protocol.
+The testbed has two parts: SHIM, a gateway that cheats in controlled ways, and ARENA, which runs the
+auditors against it under fixed rules. The names are descriptive, not acronyms. In software, a
+\emph{shim} is a thin layer slipped between two components that intercepts the calls between them;
+our gateway sits between the auditor and the real model providers in the same way. An \emph{arena}
+is where contestants compete under the same rules, which is what ARENA does for the auditors.
 
-\textbf{SHIM.} SHIM is an HTTP server that implements the OpenAI chat-completions API, including
-the \texttt{usage} block and \texttt{system\_fingerprint}. An auditor points its base URL at SHIM
-and cannot distinguish it from a provider except by behaviour. Each request passes through one of
-twelve \emph{adversary arms} (Table~\ref{tab:arms}), which decide which backend answers and how the
-response is rewritten. Randomised arms seed on a hash of the request body, never on wall-clock
-time, so every run replays exactly. For every request SHIM appends a ledger line recording the arm,
-the backend that really answered, latency, reported and true token usage, and imputed cost from
-public price tables. No auditor can read the ledger. It is the ground truth from which every ROC
-curve and false-positive rate in this paper is computed, which no audit of a real gateway can do.
+\textbf{SHIM.} SHIM is a web server that speaks the OpenAI chat API, including the \texttt{usage}
+block and \texttt{system\_fingerprint}. An auditor points at SHIM instead of a real provider and has
+no way to tell the difference except by how it behaves. Each request goes through one of twelve
+cheating strategies, which we call \emph{arms} (Table~\ref{tab:arms}). The arm decides which model
+answers and how the response is changed. Any randomness is seeded from the request itself, never
+from the clock, so every run can be repeated exactly. For every request SHIM writes a hidden log
+line: the arm, the model that really answered, the response time, the reported and true token
+counts, and the cost at public prices. No auditor can read this log. Because it records the truth,
+we can measure exactly how often each auditor is right or wrong, which is impossible when auditing a
+real gateway.
 
 \begin{table}[t]
 \centering
-\caption{Adversary arms. Bold arms appear in no prior evaluation. A4 and A11 serve the genuine
-model and test specificity.}
+\caption{The twelve arms (cheating strategies). Bold arms have never been evaluated before. A4 and
+A11 serve the correct model and test whether auditors raise false alarms.}
 \label{tab:arms}
 \small
 \begin{tabular}{@{}llc@{}}
 \toprule
-Arm & Gateway behaviour & Truth \\
+Arm & What the gateway does & Cheating? \\
 \midrule
-A0 & Honest & genuine \\
-A1 & Always serves the substitute & subst. \\
-A2 & Same model name, other provider & subst. \\
-A3 & Substitute on a fraction $\epsilon$ of requests & subst. \\
-A4 & Right model, altered sampling settings & genuine \\
-\textbf{A5} & Honest only on audit-shaped requests & subst. \\
-A6 & Replays cached answers to repeated prompts & subst. \\
-\textbf{A7} & Substitute answers, second pass restyles & subst. \\
-A8 & Inflates reported token usage & subst. \\
-A9 & Adds delay to mimic the genuine latency & subst. \\
-\textbf{A10} & Honest on public benchmark questions & subst. \\
-\textbf{A11} & Splits traffic across honest providers of $M$ & genuine \\
+A0 & Honest & no \\
+A1 & Always serves the cheaper model & yes \\
+A2 & Same model name, different provider & yes \\
+A3 & Cheaper model on a share $\epsilon$ of requests & yes \\
+A4 & Right model, changed sampling settings & no \\
+\textbf{A5} & Honest only on requests that look like tests & yes \\
+A6 & Replays saved answers to repeated prompts & yes \\
+\textbf{A7} & Cheap model answers, then a rewrite pass & yes \\
+A8 & Over-reports token usage & yes \\
+A9 & Adds delay to match the real model's speed & yes \\
+\textbf{A10} & Honest on known benchmark questions & yes \\
+\textbf{A11} & Spreads traffic over honest providers of $M$ & no \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Three arms deserve detail. \textbf{A5} (probe-aware evasion) routes a request to the genuine model
-when it \emph{looks like an audit}: at most 24 \texttt{max\_tokens}, a prompt under 220 characters,
-a prompt seen before, or a closed-answer phrase such as ``reply with only''. It needs no knowledge
-of any particular probe set, only of the shape that cheap probes share. \textbf{A10} keeps a static
-list of public benchmark questions and answers those honestly. \textbf{A11} is not an attack: it
-spreads traffic across legitimate providers of the correct model, as commercial routers do by
-default~\cite{openrouter_exacto}, and is scored as a false-positive test.
+Three arms need more explanation. \textbf{A5} (hiding from tests) sends a request to the genuine
+model when it \emph{looks like a test}: an answer limit of at most 24 tokens, a prompt under 220
+characters, a prompt it has seen before, or a phrase such as ``reply with only''. It does not need
+to know any auditor's actual questions, only the shape that cheap test questions share.
+\textbf{A10} keeps a list of public benchmark questions and answers those honestly. \textbf{A11} is
+not cheating: it spreads traffic across legitimate providers of the correct model, as commercial
+routers do by default~\cite{openrouter_exacto}. We use it to count false alarms.
 
-Backends are either a \emph{replay corpus} of real responses, recorded once from free-tier endpoints
-and committed so that every auditor sees byte-identical data, or a \emph{mock} whose model
-personalities (answer preferences, surface habits, accuracy, latency) can be sampled in unlimited
-sessions. We use two mock ladders: one hand-written, and one whose answer distributions and latency
-are fitted to the recorded census and the live run (Section~\ref{sec:results}).
+Behind SHIM sits either a \emph{recording} of real responses, collected once from free endpoints so
+that every auditor sees exactly the same data, or a \emph{simulator} that imitates how each model
+behaves (its favourite answers, writing habits, accuracy and speed) and can produce as many sessions
+as needed. We use two simulated model pairs: one with hand-written behaviour, and one whose answers
+and speeds are fitted to the real recordings (Section~\ref{sec:results}).
 
-\textbf{ARENA.} Six auditors implement one interface that returns a score, a p-value and an
-\texttt{applicable} flag (Table~\ref{tab:auditors}). Five are reimplementations labelled
-\emph{-lite}, since none is the authors' code. FUSE is new: it converts each applicable auditor's
-calibrated p-value to an e-value, multiplies them, and flags when the product exceeds $1/\alpha$,
-which by Ville's inequality controls the Type-I error at any stopping
-time~\cite{vovk2021evalues,ville1939}.
+\textbf{ARENA.} Six auditors share one interface. Each returns a score, a p-value, and a flag saying
+whether it could run at all (Table~\ref{tab:auditors}). Five are our own rebuilds of published
+methods, labelled \emph{-lite} because they are not the authors' code. FUSE is new. It turns each
+auditor's p-value into an \emph{e-value}, a measure of evidence that can be multiplied across tests,
+and raises a flag when the product passes $1/\alpha$. A classical result (Ville's inequality) then
+keeps the false-alarm rate below $\alpha$ however long the audit runs~\cite{vovk2021evalues,ville1939}.
 
 \begin{table}[t]
 \centering
-\caption{Auditors. Five reimplementations and one new fusion.}
+\caption{The six auditors: five rebuilt from published papers, one new.}
 \label{tab:auditors}
 \small
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}lll@{}}
 \toprule
-Auditor & Source & Signal \\
+Auditor & Source & What it checks \\
 \midrule
-OTE & \cite{bruckner2026} & JSD of single-answer distributions, 8 cells \\
-IRIS-lite & \cite{iris2026} & 16 surface-string features, random forest \\
-GATEOPS & \cite{lin2026gatescope} & latency KS test, fingerprint, billing \\
-KBF & \cite{fang2026kbf} & agreement on 15 knowledge-boundary facts \\
-BENCH & \cite{cai2025} & accuracy on 12 MMLU/GPQA/GSM8K items \\
-RUT & \cite{zhu2025rut} & token-rank uniformity (needs logprobs) \\
-FUSE & new & product of e-values, flag at $E > 1/\alpha$ \\
+OTE & \cite{bruckner2026} & which short answers the model prefers \\
+IRIS-lite & \cite{iris2026} & 16 surface features of the text \\
+GATEOPS & \cite{lin2026gatescope} & response times, fingerprint, billing \\
+KBF & \cite{fang2026kbf} & 15 hard numeric facts \\
+BENCH & \cite{cai2025} & accuracy on 12 benchmark questions \\
+RUT & \cite{zhu2025rut} & token probabilities (needs logprobs) \\
+FUSE & new & combined evidence from the others \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{Sealed protocol.} A session is one audit of 495 queries. Each threshold is the largest
-score seen over $N$ honest (A0) calibration sessions, which bounds the marginal false-positive rate
-by $1/(N+1)$; a session is flagged when its score \emph{strictly} exceeds the threshold. With
-$\alpha = 0.01$ and $N = 300$, the realised false-positive rate exceeds $\alpha$ with probability at
-most $0.99^{300} = 4.9\%$. The thresholds and all decision rules are written to one file, hashed
-with SHA-256, committed and tagged before any evaluation runs, and every evaluation script refuses
-to run if the hash has changed. An auditor that cannot run on an endpoint, or on a response without
-the field it needs, returns \emph{uninformative}, never \emph{consistent}. Our first seal (v1,
-$N = 100$) used a $\ge$ rule; we report its results as sealed and correct the rule in a second seal
-(v2) rather than editing v1.
+\textbf{Fixed rules.} One \emph{session} is one complete audit of 495 requests. To set each
+auditor's threshold we ran $N$ sessions against the honest arm A0 and took the highest score seen.
+A new honest session then beats that score with probability at most $1/(N+1)$, and a session is
+flagged only if its score is \emph{strictly} higher. With a 1\% target ($\alpha = 0.01$) and
+$N = 300$, the chance that the true false-alarm rate still ends up above 1\% is at most
+$0.99^{300} = 4.9\%$. All thresholds and decision rules went into one file, which we fingerprinted
+with SHA-256, committed and tagged before any test ran; every test script refuses to run if the file
+has changed. An auditor that cannot run, for example because an endpoint lacks a field it needs,
+reports \emph{uninformative}, never \emph{pass}. Our first version of these rules (v1, $N = 100$)
+flagged scores \emph{equal} to the threshold. We report v1 as it was sealed and fix the rule in a
+second sealed version (v2), rather than editing v1.
