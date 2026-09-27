@@ -17,6 +17,13 @@ endpoints:
   "cerebras:llama3.1-8b":         {input_per_mtok: 0.10, output_per_mtok: 0.10}
   "groq:llama-3.1-8b-instant":    {input_per_mtok: 0.05, output_per_mtok: 0.08}
 
+  # --- gpt-oss ladder (the real census and live run) ---
+  # Groq list prices, read from console.groq.com/docs/model/openai/* on 2026-09-27.
+  # The 20b costs exactly half the 120b, so its ratio is 0.50, not the mock
+  # ladder's 0.115 (which uses the Cerebras Llama 70B/8B prices below).
+  "groq:openai/gpt-oss-120b": {input_per_mtok: 0.15,  output_per_mtok: 0.60}
+  "groq:openai/gpt-oss-20b":  {input_per_mtok: 0.075, output_per_mtok: 0.30}
+
   # --- Mistral ladder (first-party reference) ---
   "mistral:mistral-large-latest": {input_per_mtok: 2.00, output_per_mtok: 6.00}
   "mistral:mistral-small-latest": {input_per_mtok: 0.20, output_per_mtok: 0.60}
