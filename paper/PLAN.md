@@ -68,6 +68,8 @@ Setup notes:
   "failure fetching", run it again; downloaded files are cached.
 - The bibliography lines in `main.tex` are commented out until `refs.bib` has its first entry,
   because an empty bibliography does not compile.
+- If Tectonic cannot reach its package server, install TeX Live (`texlive-latex-extra`,
+  `texlive-publishers`, `latexmk`) and run `PAPER_LATEX=latexmk python paper/build.py`.
 - `main.tex` also compiles unchanged on Overleaf (pdfLaTeX): upload `main.tex`, `sections/`,
   `refs.bib` and `figures/`.
 

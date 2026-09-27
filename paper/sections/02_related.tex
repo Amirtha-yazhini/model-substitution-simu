@@ -1,3 +1,33 @@
 % Converted from drafts/02_related.md. Budget: 0.5 pages.
 \section{Related Work}\label{sec:related}
-\placeholder{Related Work: 0.5 pages.}
+
+\textbf{Detectors by signal.} \emph{Content} detectors compare response text against a reference.
+Bruckner's one-token test~\cite{bruckner2026} asks closed questions (``a number from 1 to 100'')
+under a 16-token cap and scores the Jensen--Shannon divergence between answer distributions; it
+covered 165 models for \$34 with an EER of 7.3\%, or 10.6\% at the reduced 8-cell operating point
+we use. KBF~\cite{fang2026kbf} probes numeric facts near a model's knowledge boundary, where sizes
+of one family disagree, and reports catching 5--10\% dilution with no false positives across 16
+endpoints. IRIS~\cite{iris2026} trains a random forest on 179 visible-string features and runs a
+budgeted sequential plan against OpenRouter models, including dilution. \emph{Operational}
+detectors use metadata. GateScope~\cite{lin2026gatescope} audits ten commercial gateways along four
+axes: content, 25-turn memory, billing residuals and latency coefficient of variation.
+\emph{Benchmark} detectors~\cite{cai2025} compare accuracy on MMLU, GPQA and GSM8K; the same paper
+finds software-only auditing unreliable and recommends trusted execution environments.
+\emph{Logit} detectors need more access: RUT~\cite{zhu2025rut} tests the rank uniformity of emitted
+tokens under a locally deployed reference, and DiFR~\cite{difr2025} verifies inference from raw
+logits despite nondeterminism. Provenance methods~\cite{stemma2026} and architecture
+inference~\cite{archinfer2026} address the related question of what a model is, not whether it
+changed.
+
+\textbf{Replication.} A frozen-threshold holdout study~\cite{holdout2026} matched model lineage by
+\texttt{usage.prompt\_tokens}. Development pairs separated perfectly; on holdout pairs sensitivity
+fell to 0.50, and only 6 of 12 pairs could be scored because of rate limits and missing fields. We
+adopt its discipline of sealing thresholds before evaluation, and extend it from one method to six.
+
+\textbf{The gap.} Each detector was evaluated against a passive gateway that substitutes without
+regard to who is asking. None was tested against a gateway that recognises audit traffic, and none
+was run on the same data as the others. IRIS is closest to our setting, since it already treats
+dilution and audit budget. We differ in three ways: an adaptive adversary, a common replayed corpus
+on which all auditors see byte-identical responses, and a benign-routing control that no prior
+evaluation includes. Commercial routers already split traffic across providers by
+default~\cite{openrouter_exacto}, so a detector that flags heterogeneity will flag them.
