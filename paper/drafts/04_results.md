@@ -3,7 +3,8 @@
 > NOTE: budget 1.75 pages. Synced from sections/*.tex after the plain-language rewrite; edit here and send back.
 
 We report detection quality as AUROC: the chance that a cheating session scores higher than an
-honest one. 0.5 is a coin flip and 1.0 is perfect.
+honest one. 0.5 is a coin flip and 1.0 is perfect. Sections [grid]–[fpr] and
+Section [econ] use the simulator; the others use real endpoints.
 
 ## Which auditors can run on real endpoints
 We tested 14 free model endpoints from three providers; 11 worked. For each we checked whether it
@@ -25,19 +26,29 @@ We ran 30 audit sessions against each arm on each simulated model pair, and comp
 with 500 honest sessions, using the fixed v2 thresholds (Fig. F4). Every auditor that can
 run catches full substitution (A1) perfectly (AUROC 1.00). Three results matter more.
 
-*Hiding from tests beats every auditor.* Against A5 the best AUROC is 0.56 on the hand-written
-pair and 0.61 on the fitted pair, close to a coin flip, and FUSE does no better. Every auditor's
-questions are short, have a small answer limit and are repeated. That is what makes them cheap, and
-it is also exactly what A5 looks for. A test question that did not look like a test would need a
-longer prompt, a larger answer limit and fewer repeats, so it would cost more.
+*Hiding from tests beats every auditor as published.* Against A5 the best AUROC is 0.56 on the
+hand-written pair and 0.61 on the fitted pair, and no 95% bootstrap interval reaches above 0.70. Every
+auditor's questions are short and repeated, and some contain phrases like "reply with only". That
+is what makes them cheap, and exactly what A5 looks for. Two follow-up checks, run after sealing,
+show both sides of this. First, hiding is nearly free for the cheater: replaying 172,418 real user
+requests from the WildChat dataset through A5's classifier, only 3.3% of requests (0.6% of token
+cost) look like tests, so A5 keeps over 99% of the saving of always cheating. Second, disguised tests
+work: when OTE asks the same eight questions inside long, varied, everyday requests that are never
+repeated, A5 no longer spots them and OTE catches it in every session (AUROC 1.00, with no honest
+session flagged), but each session costs 4.9$\times$ more. In our simulator the disguise keeps each
+model's answer pattern by construction; IRIS reports that real models keep theirs under
+disguise [@iris2026]. A gateway that recognises what a question *means*, not how it looks,
+remains untested.
 
 *Knowing the benchmarks beats only the benchmark auditor.* A fixed list of public benchmark
 questions (A10) drops BENCH to AUROC 0.48. Auditors that write their own questions still score 1.00.
 
 *Some honest behaviour is flagged.* A4 serves the correct model but with different sampling
 settings. OTE and FUSE flag it perfectly (AUROC 1.00) and IRIS-lite nearly so (0.94–0.96): a change
-in the answer pattern is mistaken for a different model. GATEOPS flags honest load balancing (A11)
-perfectly too, which Section [econ] discusses. Against A6, which replays saved answers and
+in the answer pattern is mistaken for a different model. Whether a silent change of sampling settings should count as cheating is a policy choice; we
+score it as honest. GATEOPS flags honest load balancing (A11) perfectly too, which
+Section [econ] discusses. The perfect scores against A6–A9 say little: these arms also serve
+the cheaper model, which our simulator makes very different from the genuine one. Against A6, which replays saved answers and
 so has no real response time, GATEOPS correctly says *uninformative* instead of passing it.
 
 > FIGURE F4 (fig_evasion): AUROC of each auditor (rows) against each arm (columns), v2, hand-written model pair. * marks honest arms; hatched cells mean the auditor could not run. Column A5: no auditor exceeds 0.56.

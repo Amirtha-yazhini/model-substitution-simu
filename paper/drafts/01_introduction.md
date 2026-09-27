@@ -6,9 +6,10 @@ When a customer calls an LLM API, they name a model and pay that model's price p
 response contains text and repeats the model's name, but it proves nothing about which model
 actually produced the text. A gateway, reseller or router that sits between the customer and the
 model provider can answer with a smaller model, a compressed (quantised) copy, or a mix of models,
-and still report the name the customer asked for. The incentive is large. In our setup the cheaper
-model costs 11.5% of the genuine one, so a gateway that swaps one request in ten saves about \$88
-for every \$1,000 the customer spends.
+and still report the name the customer asked for. The incentive is large. For the two model pairs in this paper the cheaper
+model costs 11.5% (Llama 3.3 70B vs. 3.1 8B, used to price our simulator) or 50% (gpt-oss-120b
+vs. 20b, the real pair we measure) of the genuine one, so a gateway that swaps one request in ten
+saves \$50–\$88 for every \$1,000 the customer spends.
 
 The customer pays for "model X", but the only record of what ran is the gateway's own word. The
 provider could prove what ran using secure hardware [@cai2025], but gateways do not offer this
@@ -17,7 +18,7 @@ answers. A black-box *auditor* sends test requests (*probes*) and decides, from 
 timing and metadata that come back, whether the advertised model answered.
 
 At least eight such auditors have been published since April 2025
- [@cai2025; @zhu2025rut; @lin2026gatescope; @fang2026kbf; @bruckner2026; @iris2026; @difr2025].
+ [@cai2025; @zhu2025rut; @lin2026gatescope; @fang2026kbf; @bruckner2026; @iris2026; @difr2025; @holdout2026].
 Each was tested on its own data, against its own simulated cheater, and usually with thresholds
 chosen on the same data it reports. A replication study that fixed its thresholds in
 advance [@holdout2026] showed why this matters: a method that was perfect on its development
@@ -32,7 +33,9 @@ another provider of $M$, or to a cache of earlier answers. It can change the rep
 the `usage` token counts and the `system_fingerprint` field, and it can add delay. It
 sees every request, so it can guess which requests are tests from how they look. It does not know
 the auditor's exact probes or thresholds, but it knows the published methods and the public
-benchmarks. Its goal is to save as much as possible without being caught. The customer sees only
+benchmarks. Its goal is to save as much as possible without being caught. We assume the customer can obtain
+honest answers from the genuine model, for example from its first-party provider, to use as a
+reference. The customer sees only
 what comes back: the text, how long the answer took, the `usage` block, the fingerprint, and
 token probabilities (logprobs) if the endpoint provides them. Response time is a side channel the
 customer can always measure, and the text is the only other signal. Honest variation, such as
@@ -50,6 +53,8 @@ spreading traffic across several legitimate providers of $M$, is allowed and sho
 - *Which auditors work on real endpoints.* On 11 free endpoints, a method that needs token
   probabilities runs on none, and the cheapest published method runs as described on only 4,
   because models now "think" silently before answering.
-- *Three negative results.* A gateway that hides from tests beats every auditor. False
-  alarms, not cost, mean nobody can catch cheating on fewer than about 10% of requests. And
-  timing-based auditors cannot tell cheating from honest load balancing.
+- *What cheating costs and what catching it costs.* Hiding from tests beats every auditor
+  as published and, measured on real chat traffic, costs the cheater almost nothing; disguised
+  tests catch it in simulation at five times the audit cost. False alarms, not cost, stop any
+  auditor from catching cheating on fewer than about 10% of requests. And timing-based auditors
+  cannot tell cheating from honest load balancing.

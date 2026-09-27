@@ -63,7 +63,9 @@ whether it could run at all (Table~\ref{tab:auditors}). Five are our own rebuild
 methods, labelled \emph{-lite} because they are not the authors' code. FUSE is new. It turns each
 auditor's p-value into an \emph{e-value}, a measure of evidence that can be multiplied across tests,
 and raises a flag when the product passes $1/\alpha$. A classical result (Ville's inequality) then
-keeps the false-alarm rate below $\alpha$ however long the audit runs~\cite{vovk2021evalues,ville1939}.
+keeps the false-alarm rate below $\alpha$~\cite{vovk2021evalues,ville1939}, but only if the auditors'
+evidence is independent. Ours is not, since all auditors read the same session, so we also report the
+\emph{average} of the e-values, which stays valid under any dependence (Section~\ref{sec:econ}).
 
 \begin{table}[t]
 \centering
@@ -96,4 +98,5 @@ with SHA-256, committed and tagged before any test ran; every test script refuse
 has changed. An auditor that cannot run, for example because an endpoint lacks a field it needs,
 reports \emph{uninformative}, never \emph{pass}. Our first version of these rules (v1, $N = 100$)
 flagged scores \emph{equal} to the threshold. We report v1 as it was sealed and fix the rule in a
-second sealed version (v2), rather than editing v1.
+second sealed version (v2), rather than editing v1. We designed v2 after seeing v1's results, so v2
+was evaluated only on fresh blocks of random seeds that no earlier run had used.

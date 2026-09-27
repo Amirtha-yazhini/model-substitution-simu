@@ -55,7 +55,9 @@ whether it could run at all (Tab. auditors). Five are our own rebuilds of publis
 methods, labelled *-lite* because they are not the authors' code. FUSE is new. It turns each
 auditor's p-value into an *e-value*, a measure of evidence that can be multiplied across tests,
 and raises a flag when the product passes $1/\alpha$. A classical result (Ville's inequality) then
-keeps the false-alarm rate below $\alpha$ however long the audit runs [@vovk2021evalues; @ville1939].
+keeps the false-alarm rate below $\alpha$ [@vovk2021evalues; @ville1939], but only if the auditors'
+evidence is independent. Ours is not, since all auditors read the same session, so we also report the
+*average* of the e-values, which stays valid under any dependence (Section [econ]).
 
 > TABLE auditors caption: The six auditors: five rebuilt from published papers, one new.
 
@@ -79,4 +81,5 @@ with SHA-256, committed and tagged before any test ran; every test script refuse
 has changed. An auditor that cannot run, for example because an endpoint lacks a field it needs,
 reports *uninformative*, never *pass*. Our first version of these rules (v1, $N = 100$)
 flagged scores *equal* to the threshold. We report v1 as it was sealed and fix the rule in a
-second sealed version (v2), rather than editing v1.
+second sealed version (v2), rather than editing v1. We designed v2 after seeing v1's results, so v2
+was evaluated only on fresh blocks of random seeds that no earlier run had used.

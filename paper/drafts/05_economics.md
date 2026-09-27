@@ -4,9 +4,10 @@
 
 **Break-even.** If the gateway swaps a share $\epsilon$ of requests, it saves
 $\$1{,}000 \cdot \epsilon \cdot (1 - r)$ for every \$1,000 the customer spends, where $r = 0.115$ is
-the price of the cheaper model relative to the genuine one. We compare this with the cost of running
-enough audit sessions to catch the cheating 80% of the time, using measured token counts and public
-prices (Fig. F2).
+the price of the cheaper model relative to the genuine one: 0.115 for the Llama pair that prices our
+simulator, 0.50 for the real gpt-oss pair. We compare this with the cost of running enough audit
+sessions to catch the cheating 80% of the time, using measured token counts and public prices
+(Fig. F2).
 
 > FIGURE F2 (fig_break_even): What the cheater saves per \$1,000 per month (top line) vs. what an audit costs to catch it 80% of the time, by share of requests swapped (v2, hand-written pair). Hollow markers would cause too many false alarms. In the shaded region no acceptable audit works.
 
@@ -23,35 +24,37 @@ auditor catches 6% of sessions on the hand-written pair and 1% on the fitted pai
 are not enough to reach 80%. The lowest cheating rate any acceptable audit can catch is therefore
 $\epsilon^* = 0.10$ on both simulated pairs, with a bootstrap 95% interval of [0.10, 0.10].
 IRIS-lite reaches it, catching 34% of single sessions and needing 4 sessions (hand-written pair), or
-56% and 2 sessions (fitted pair), for \$0.003–\$0.006.
+56% and 2 sessions (fitted pair), for \$0.003–\$0.006. The price ratio does not move $\epsilon^*$,
+because audit cost is far below the saving at either ratio.
+
+*How much does $\epsilon^*$ depend on our choices?* Varying them after sealing, a power target of
+50–90% and a false-alarm budget of 1–10% give $\epsilon^*$ between 0.07 and 0.15 (up to 0.25 without IRIS-lite at a 1% budget). Only removing the
+false-alarm cap altogether pushes it lower, to 0.02, and then only through 107–161 repeated sessions
+in which the winning auditor flags cheating sessions (1.0–1.5%) barely more often than honest ones
+(0.4%); an honest customer running that audit would face a 35–48% chance of a false alarm. This is
+the sense in which false alarms, not cost, set the floor.
 
 One caveat changes this number. IRIS-lite sets $\epsilon^*$ on both pairs, but on real recordings
 it cannot tell the two models apart (Section [real]); in the simulator it relies on
 hand-written writing habits. As an extra check done after sealing, we removed IRIS-lite:
 $\epsilon^*$ stays at 0.10 on the hand-written pair and rises to 0.15 on the fitted pair, both now
 set by GATEOPS. We therefore report $\epsilon^*$ as 0.10–0.15. A sensible cheater stays just below
-it. Swapping 5% of requests still saves \$44 per \$1,000, and no auditor here catches that without
-more false alarms than a customer would accept.
+it. Swapping 5% of requests still saves \$25–\$44 per \$1,000, and no auditor here catches that
+without more false alarms than a customer would accept.
 
 **Cheating or load balancing?** A3 at $\epsilon = 0.10$ sends 10% of traffic to a cheaper
 model. A11 spreads traffic across honest providers of the correct model. The first is fraud; the
-second is normal load balancing, which routers do by default. (Fig. F6) and
-(Tab. confound) compare them over 200 sessions each.
+second is normal load balancing, which routers do by default. (Fig. F6) compares
+them over 200 sessions each.
 
 > FIGURE F6 (fig_confound): Share of sessions flagged for A3 (cheating on 10% of requests) and A11 (honest load balancing), v2 hand-written pair, 200 sessions each. Top row: AUROC for telling them apart. The timing auditor flags honest load balancing far more often than cheating.
 
-> TABLE confound caption: A3 (cheating, $\epsilon = 0.10$) vs. A11 (honest load balancing), hand-written / fitted pair. AUROC below 0.5 means honest load balancing looks *more* suspicious than cheating.
-
-| Auditor | Flags A3 | Flags A11 | AUROC |
-|---|---|---|---|
-| IRIS-lite | 34% / 56% | 0% / 0% | 0.96 / 0.98 |
-| OTE | 4% / 0% | 0% / 0% | 0.68 / 0.48 |
-| GATEOPS | 18% / 5% | 96% / 100% | 0.03 / 0.00 |
-| FUSE | 2% / 0% | 5% / 50% | 0.35 / 0.01 |
-
-GATEOPS finds honest load balancing *more* suspicious than cheating (AUROC 0.00–0.03), and
+GATEOPS finds honest load balancing *more* suspicious than cheating (AUROC 0.03; 0.00 on the
+fitted pair, where it flags 100% of load-balancing and 5% of cheating sessions), and
 FUSE inherits the problem: on the fitted pair it flags half of the honest load-balancing sessions
-and none of the cheating ones. Timing and metadata show whether traffic is *mixed*, not
+and none of the cheating ones. The dependence-safe average of FUSE's e-values does not fix this: it
+still flags 44% of honest load-balancing sessions on the fitted pair, and no cheating session at
+$\epsilon = 0.10$ on either pair. Timing and metadata show whether traffic is *mixed*, not
 whether the model is *wrong*, and load balancing mixes traffic by design. The text-based
 auditors can tell the two apart here only because our simulated second provider returns almost the
 same text. A real second provider, running different software or a compressed copy, would change the

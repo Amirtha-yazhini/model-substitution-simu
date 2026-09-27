@@ -18,13 +18,15 @@ GateScope's memory test. Each result is a lower bound on what the original metho
 (iv) *Free endpoints, at one point in time.* Groq served nearly all real traffic; other
 providers asked for payment or ran out of daily quota. Free tiers change every month.
 (v) *Simulated cheaters and a small live test.* A5 is our own design; a real one could be better
-or worse. The live test used 96 requests per arm on one provider, and honest load balancing could
+or worse, and the disguised tests that beat it were checked only in simulation. The checks added after
+sealing (disguised tests, real-traffic cost of A5, sensitivity of $\epsilon^*$) are exploratory. The live test used 96 requests per arm on one provider, and honest load balancing could
 not be tested live.
 
 **Conclusion.** We tested five published auditors and one new combined auditor against the same
 cheating gateway, with every threshold fixed before testing. Auditing is cheap: a session costs well
 under a cent. But it is not robust. A gateway that recognises test-shaped requests beats every
-auditor, and the shape it recognises is exactly what makes the tests cheap. Below a cheating rate of
+auditor as published, gives up almost nothing on real traffic, and is caught again only when the tests
+are disguised as ordinary requests, which costs about five times more. Below a cheating rate of
 about 10–15%, no audit can catch the gateway without too many false alarms. And timing-based
 auditors flag honest load balancing more readily than fraud. A wrong model can be caught from the
 text; undisclosed routing and a wrong bill cannot. Trustworthy billing for LLM APIs will need test

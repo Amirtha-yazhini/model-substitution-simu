@@ -177,3 +177,26 @@ and about half a page of free space.
 | M1 | A5 circularity | Reframe as "undisguised probes"; estimate A5's cost from a public request-length distribution | Medium | Small analysis |
 | M1 | Disguised probes | Run one disguised-probe OTE variant against A5 in the simulator | Higher | Yes |
 | M6 | Single provider | State as scope in the abstract; nothing cheap fixes this | — | Yes (quota) |
+
+---
+
+## Outcome: what was done for each point (2026-09-27)
+
+All new analyses were run **after** the v2 seal and are labelled exploratory in the paper; no sealed
+number changed. Scripts: `scripts/16_review_checks.py`, `17_a5_real_traffic.py`,
+`18_disguised_probes.py`. Results: `results/v2/tables/{review_checks,a5_real_traffic,disguised_probes}.md`.
+
+| # | Outcome |
+|---|---|
+| M1 | **Fixed with two new experiments.** (a) A5's classifier on 172,418 real WildChat requests serves only 3.3% of requests (0.6% of token cost) honestly, so A5 keeps >99% of full substitution's saving: the attack is rational. (b) OTE with disguised probes (long, unique, marker-free wrappers) catches A5 in simulation, AUROC 0.54 → 1.00 with 0/200 honest sessions flagged, at 4.9× the cost per session. Paper now says "beats every auditor *as published*" and names a semantics-aware A5 as untested. |
+| M2 | **Fixed in text.** Results opens by saying which sections use the simulator; the abstract says "in simulation"; the perfect scores against A6–A9 are explained as a simulator property. |
+| M3 | **Fixed.** Groq gpt-oss prices added to `config/prices.yaml` (ratio 0.50). Paper states both ratios and the \$50–\$88 range; ε\* is unchanged at 0.50 because audit cost is far below the saving. |
+| M4 | **Fixed.** Design section states the independence assumption; the dependence-safe mean e-value is reported: it flags 0% of honest sessions and 0% of A3 at ε = 0.10, and still flags 44% of honest routing on the fitted pair, so the confound conclusion holds without the assumption. |
+| M5 | **Fixed.** Sensitivity paragraph: ε\* = 0.07–0.15 across power 50–90% and false-alarm budget 1–10% (up to 0.25 without IRIS-lite at 1%). Without any cap the rule reaches 0.02 only through 107–161 sessions whose flags are barely above the false-alarm rate (35–48% chance of a false alarm), which substantiates "false alarms, not cost". Reference access is now an explicit threat-model assumption. |
+| M6 | **Scope stated, not fixable here.** Abstract and limitations name the 11 free endpoints and one provider. |
+| M7 | **Fixed.** Design section says v2 was designed after v1's results and evaluated only on fresh seed blocks (verified in `config/protocol_v2.yaml`: `seeds_already_seen`). |
+| minor 1 | Related work already credits IRIS's evasion tests (fixed in the reference-verification pass). |
+| minor 3 | Results now says counting A4 as honest is a policy choice. |
+| minor 4 | Bootstrap intervals computed for every grid AUROC; the A5 text cites them (none above 0.70). |
+| minor 6 | Holdout study added to the list of eight auditors. |
+| minor 2, 5, 7, 8, 10 | Not changed: "-lite" and lower-bound caveat already in limitations; fitted-pair figures need space we do not have; tone and title are the authors' call; the anonymised link is filled in at submission. The confound table was cut to stay at 6 pages; its fitted-pair numbers are in the text. |
