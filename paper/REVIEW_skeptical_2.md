@@ -165,3 +165,32 @@ it criticises in others. One sentence fixes it.
 | M4 | WildChat is not API traffic | Restrict the claim to chat traffic, or add an API-like trace if one is public | Low / Medium | Optional |
 | M3 | Disguise true by construction | Narrow the abstract; the decisive fix is a small live run on Groq | Low (text) / Medium (live) | Live run needs a Groq key |
 | minor 8, 10 | A9 generalisation; single session | Soften the wording | Trivial | No |
+
+---
+
+## Outcome: what was done for each point (2026-09-27)
+
+All new analyses ran after the v2 seal, are labelled post-hoc in the abstract and exploratory in the
+paper, and change no sealed number. Scripts `19_pooled_sessions.py`, `20_confound_latency.py`,
+`21_a5_api_trace.py`; results in `results/v2/tables/{pooled_sessions,confound_latency,a5_api_trace}.md`.
+
+| # | Outcome |
+|---|---|
+| M1 | **Confirmed, and the headline changed.** One pooled test (one-sided Welch t-test of k suspect sessions vs the 300 honest calibration sessions, 5% budget) keeps the whole-audit false-alarm rate at or below 5% (checked on random splits of 800 honest sessions, k ≤ 128) and catches ε = 0.02 (hand-written, GATEOPS, 32 sessions, \$0.09) or 0.03 (fitted, 128 sessions, \$0.32–0.36). "False alarms, not cost, set the floor" now applies only to single-session audits; abstract, introduction, economics and conclusion say so. Two earlier versions of this check were statistically invalid (threshold ignored calibration uncertainty; false-alarm check resampled one fixed holdout); both are documented in the script. |
+| M2 | **Confirmed as a dependency, stated in the paper.** With the honest second provider 18% faster (the measured real gap), GATEOPS still flags 74% (hand-written) / 100% (fitted) of load-balancing sessions; with identical timing, 0%. The confound holds whenever honest providers differ in speed. Re-run sessions reproduce the committed ones exactly (20/20 per pair). |
+| M3 | **Narrowed.** The results say the disguise works by construction in the simulator (bare-token answers, question-only), that real models answer in prose and may shift, and that IRIS finds only partial transfer across framings. The live test needs a Groq API key, which this environment does not have. |
+| M4 | **Bounded.** Claim restricted to chat traffic. Azure's production trace: conversation traffic has no request both short and small-output; in code completion 76% of requests generate ≤ 24 tokens, so A5 could serve many honestly if they also repeat (not recorded). |
+| M5 | **Fixed.** The live section now states that the sealed GATEOPS and new-fingerprint rules both fired on honest A0, and why. |
+| minor 1 | Fixed: "under ten cents"; conclusion no longer claims "well under a cent". |
+| minor 2 | Fixed garbled price-ratio sentence. |
+| minor 3 | ε\* stated consistently: 10–15% for single-session audits, 2–3% pooled; the bootstrap interval is labelled with its grid step. |
+| minor 4 | Fixed: 14 model–provider combinations / 0.76% of responses vs 4 of 11 endpoints. |
+| minor 5 | Novelty narrowed to load balancing within one session; KBF's same-model controls credited. |
+| minor 6 | Taxonomy fixed: timing cannot separate A3 from A11; text only while honest providers return the same text. |
+| minor 7 | "No auditor exceeds AUROC 0.56 / 0.61." |
+| minor 8 | A9 generalisation removed; a live-shaped A9 is named as untested. |
+| minor 9 | Abstract marks the post-hoc checks. |
+| minor 10 | Unchanged (single session per model is already a stated limitation). |
+
+To stay at 6 pages: the v1/v2 false-alarm figure was removed (numbers stay in the text), and the aside
+on model-provenance papers (Stemma, architecture inference) was cut from related work.

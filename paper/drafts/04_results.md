@@ -14,8 +14,9 @@ before answering (Fig. F3). IRIS-lite, KBF, BENCH and the timing part of GATEOPS
 11. Three do not. RUT needs token probabilities, and no endpoint provides them: 0 of 11. GateScope's
 billing check needs cache counts: 2 of 11. And the one-token method, as published, works on only 4
 of 11. Four endpoints spend 26–36 hidden tokens thinking before they answer, so a 16-token limit
-returns an empty answer. The one-token paper had to drop 0.76% of its census for
-this reason [@bruckner2026]; here it is 36%. Raising the limit to 256 tokens brings the method back
+returns an empty answer. The one-token paper met the same problem on 14 model–provider
+combinations and dropped 0.76% of its responses [@bruckner2026]; here it affects 4 of 11
+endpoints. Raising the limit to 256 tokens brings the method back
 to 10 of 11, but each question now costs more. The cheapest known auditor became more expensive
 because the models changed, not the method.
 
@@ -26,18 +27,23 @@ We ran 30 audit sessions against each arm on each simulated model pair, and comp
 with 500 honest sessions, using the fixed v2 thresholds (Fig. F4). Every auditor that can
 run catches full substitution (A1) perfectly (AUROC 1.00). Three results matter more.
 
-*Hiding from tests beats every auditor as published.* Against A5 the best AUROC is 0.56 on the
-hand-written pair and 0.61 on the fitted pair, and no 95% bootstrap interval reaches above 0.70. Every
+*Hiding from tests beats every auditor as published.* Against A5 no auditor exceeds AUROC 0.56
+on the hand-written pair or 0.61 on the fitted pair, and no 95% bootstrap interval reaches above
+0.70. Every
 auditor's questions are short and repeated, and some contain phrases like "reply with only". That
 is what makes them cheap, and exactly what A5 looks for. Two follow-up checks, run after sealing,
-show both sides of this. First, hiding is nearly free for the cheater: replaying 172,418 real user
-requests from the WildChat dataset through A5's classifier, only 3.3% of requests (0.6% of token
-cost) look like tests, so A5 keeps over 99% of the saving of always cheating. Second, disguised tests
+show both sides of this. First, on chat traffic hiding is nearly free for the cheater: replaying 172,418
+real user requests from the WildChat dataset through A5's classifier, only 3.3% of requests (0.6%
+of token cost) look like tests, so A5 keeps over 99% of the saving of always cheating. API traffic
+can differ: in Azure's production code-completion trace [@splitwise2024], 76% of requests
+generate at most 24 tokens, so A5 could serve many honestly if they also repeat, which the trace
+does not record. Second, disguised tests
 work: when OTE asks the same eight questions inside long, varied, everyday requests that are never
 repeated, A5 no longer spots them and OTE catches it in every session (AUROC 1.00, with no honest
-session flagged), but each session costs 4.9$\times$ more. In our simulator the disguise keeps each
-model's answer pattern by construction; IRIS reports that real models keep theirs under
-disguise [@iris2026]. A gateway that recognises what a question *means*, not how it looks,
+session flagged), but each session costs 4.9$\times$ more. This holds by construction in our simulator, which picks
+an answer from the question alone and replies with a bare token; a real model would answer in prose,
+and the surrounding request may shift its answers. IRIS reports that real models stay identifiable
+under disguise, but only partly across different framings [@iris2026]. A gateway that recognises what a question *means*, not how it looks,
 remains untested.
 
 *Knowing the benchmarks beats only the benchmark auditor.* A fixed list of public benchmark
@@ -61,11 +67,7 @@ batch: the 100 calibration sessions had simply produced an unluckily low thresho
 300 event. Separately, flagging equal scores turned ties into alarms, which doubled KBF's and
 BENCH's rate from 2% to 4%. Version v2 fixes both (Section [design]). On 500 honest test
 sessions, every auditor's false-alarm rate is now at most 0.8% [0.3, 2.0] (KBF), and GATEOPS drops
-to 0 of 500 (Fig. F5). The general lesson: a threshold set from 100 honest sessions has a
-real chance of missing its target, and only a larger calibration set, fixed in advance, makes that
-chance small.
-
-> FIGURE F5 (fig_fpr): Share of honest sessions wrongly flagged, with 95% Wilson intervals [@wilson1927]: v1 (50 sessions, plus 700 fresh ones) and v2 (500 sessions). Dashed line: the 1% target.
+to 0 of 500 (Wilson 95% intervals [@wilson1927]). A threshold set from 100 honest sessions can easily miss its target.
 
 ## Real recorded responses
 We recorded 742 real responses, including one full 240-request OTE session each from
@@ -98,13 +100,15 @@ succeeded in 25 minutes, at no cost.
 | A3 | 14/96 | 0.650 | 0.61 | 0.08 (0.90) | 0.84 |
 | A9 | 96/96 | 0.870 | 0.99 | **0.43** ($3.1\times10^{-8}$) | 0.028 |
 
-The honest A0 passes both tests. The real speed difference between the two models is 18%, not the
+The honest A0 passes both calibration-free tests, but two sealed rules fired on it: the GATEOPS
+threshold, calibrated on simulated 240-request sessions, and the new-fingerprint rule, since Groq
+rotates `system_fingerprint` on honest traffic. Neither is usable on this service. The real speed difference between the two models is 18%, not the
 3$\times$ our hand-written simulator assumed, but timing still catches full substitution (A1). The
 text test misses it with 12 repeats per question ($p = 0.10$), although 30 repeats caught the same
 swap in the recordings: the number of repeats matters. A3, which swapped 14 of 96 requests, passes
 both tests. A9 added delay to reach a fixed target (0.9 s on average, with the timing variation that
 GateScope reported for an honest baseline [@lin2026gatescope]), but Groq's real model answers
 in 0.66 s, so the delay made the cheap model *slower* and more
-erratic than the real one, and it was caught. Hiding by copying fixed numbers instead of the real
-service gives the cheater away. Honest load balancing (A11) could not be tested live, because
+erratic than the real one, and it was caught. A cheater that shapes delay to live measurements of
+the genuine service was not tested. Honest load balancing (A11) could not be tested live, because
 no second free provider offers `gpt-oss-120b`.

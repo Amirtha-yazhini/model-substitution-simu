@@ -43,8 +43,8 @@ show both sides of this. First, on chat traffic hiding is nearly free for the ch
 real user requests from the WildChat dataset through A5's classifier, only 3.3\% of requests (0.6\%
 of token cost) look like tests, so A5 keeps over 99\% of the saving of always cheating. API traffic
 can differ: in Azure's production code-completion trace~\cite{splitwise2024}, 76\% of requests
-generate 24 tokens or fewer, so if clients cap \texttt{max\_tokens} that low, A5 would serve most of
-them honestly whenever they also repeat; how often they repeat is not recorded. Second, disguised tests
+generate at most 24 tokens, so A5 could serve many honestly if they also repeat, which the trace
+does not record. Second, disguised tests
 work: when OTE asks the same eight questions inside long, varied, everyday requests that are never
 repeated, A5 no longer spots them and OTE catches it in every session (AUROC 1.00, with no honest
 session flagged), but each session costs 4.9$\times$ more. This holds by construction in our simulator, which picks
@@ -81,17 +81,7 @@ batch: the 100 calibration sessions had simply produced an unluckily low thresho
 300 event. Separately, flagging equal scores turned ties into alarms, which doubled KBF's and
 BENCH's rate from 2\% to 4\%. Version v2 fixes both (Section~\ref{sec:design}). On 500 honest test
 sessions, every auditor's false-alarm rate is now at most 0.8\% [0.3, 2.0] (KBF), and GATEOPS drops
-to 0 of 500 (Fig.~\ref{fig:F5}). The general lesson: a threshold set from 100 honest sessions has a
-real chance of missing its target, and only a larger calibration set, fixed in advance, makes that
-chance small.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{fig_fpr}
-\caption{Share of honest sessions wrongly flagged, with 95\% Wilson intervals~\cite{wilson1927}:
-v1 (50 sessions, plus 700 fresh ones) and v2 (500 sessions). Dashed line: the 1\% target.}
-\label{fig:F5}
-\end{figure}
+to 0 of 500 (Wilson 95\% intervals~\cite{wilson1927}). A threshold set from 100 honest sessions can easily miss its target.
 
 \subsection{Real recorded responses}\label{sec:real}
 We recorded 742 real responses, including one full 240-request OTE session each from

@@ -3,10 +3,9 @@
 > NOTE: budget 1.0 page. Synced from sections/*.tex after the plain-language rewrite; edit here and send back.
 
 The testbed has two parts: SHIM, a gateway that cheats in controlled ways, and ARENA, which runs the
-auditors against it under fixed rules. The names are descriptive, not acronyms. In software, a
-*shim* is a thin layer slipped between two components that intercepts the calls between them;
-our gateway sits between the auditor and the real model providers in the same way. An *arena*
-is where contestants compete under the same rules, which is what ARENA does for the auditors.
+auditors against it under fixed rules. The names are descriptive, not acronyms: a *shim* is a thin
+software layer slipped between two components, as our gateway sits between auditor and providers,
+and an *arena* is where contestants compete under the same rules.
 
 **SHIM.** SHIM is a web server that speaks the OpenAI chat API, including the `usage`
 block and `system_fingerprint`. An auditor points at SHIM instead of a real provider and has

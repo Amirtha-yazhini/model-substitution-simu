@@ -17,36 +17,44 @@ cause too many false alarms. In the shaded region no acceptable audit works.}
 \label{fig:F2}
 \end{figure}
 
-\emph{Cost is never the problem.} One audit session costs between \$0.0013 (KBF) and \$0.014
-(FUSE). Wherever an auditor can reach 80\%, the total is under ten cents (at most \$0.08), while the
-cheater saves tens of dollars. On price alone, auditing always pays.
+\emph{Cost is never the problem.} One audit session costs \$0.0013 (KBF) to \$0.014 (FUSE);
+wherever an auditor reaches 80\%, the total is under ten cents, against savings of tens of dollars.
 
-\emph{False alarms are the problem.} Running more sessions catches more cheating, but also raises
-more false alarms. If one honest session is wrongly flagged with probability $f$, then $k$ sessions
+\emph{False alarms limit repeated single-session audits.} Running more sessions catches more
+cheating, but if each session is judged on its own it also raises more false alarms. If one honest session is wrongly flagged with probability $f$, then $k$ sessions
 produce at least one false alarm with probability $1 - (1-f)^k$. Our fixed rules allow at most a
 5\% chance of any false alarm per audit, which limits each auditor to 6--15 sessions. Below
 $\epsilon = 0.10$, a single session almost never catches anything: at $\epsilon = 0.07$ the best
 auditor catches 6\% of sessions on the hand-written pair and 1\% on the fitted pair, so 15 sessions
 are not enough to reach 80\%. The lowest cheating rate any acceptable audit can catch is therefore
-$\epsilon^* = 0.10$ on both simulated pairs, with a bootstrap 95\% interval of [0.10, 0.10].
+$\epsilon^* = 0.10$ on both simulated pairs, with a bootstrap 95\% interval of [0.10, 0.10] (on a grid that steps 0.07, 0.10, 0.15).
 IRIS-lite reaches it, catching 34\% of single sessions and needing 4 sessions (hand-written pair), or
 56\% and 2 sessions (fitted pair), for \$0.003--\$0.006. The price ratio does not move $\epsilon^*$,
 because audit cost is far below the saving at either ratio.
 
-\emph{How much does $\epsilon^*$ depend on our choices?} Varying them after sealing, a power target of
+\emph{Sensitivity.} Varying our choices after sealing, a power target of
 50--90\% and a false-alarm budget of 1--10\% give $\epsilon^*$ between 0.07 and 0.15 (up to 0.25 without IRIS-lite at a 1\% budget). Only removing the
 false-alarm cap altogether pushes it lower, to 0.02, and then only through 107--161 repeated sessions
 in which the winning auditor flags cheating sessions (1.0--1.5\%) barely more often than honest ones
 (0.4\%); an honest customer running that audit would face a 35--48\% chance of a false alarm. This is
-the sense in which false alarms, not cost, set the floor.
+the sense in which false alarms, not cost, set the floor \emph{for audits that judge each session
+alone}.
+
+\emph{Pooling sessions removes most of the floor.} An auditor can instead fix $k$ in advance and run
+one test on all $k$ sessions: a one-sided Welch $t$-test of their mean score against the 300 honest
+calibration sessions, at the same 5\% budget. Checked on random splits of our 800 honest sessions,
+its false-alarm rate stays at or below 5\% for every auditor up to $k = 128$. With it, GATEOPS
+catches $\epsilon = 0.02$ in 32 sessions for \$0.09 on the hand-written pair, and $\epsilon = 0.03$
+in 128 sessions for \$0.36 on the fitted pair (where BENCH needs \$0.32). In simulation, then, the
+floor is set by how evidence is combined, and cost is again not the limit.
 
 One caveat changes this number. IRIS-lite sets $\epsilon^*$ on both pairs, but on real recordings
 it cannot tell the two models apart (Section~\ref{sec:real}); in the simulator it relies on
 hand-written writing habits. As an extra check done after sealing, we removed IRIS-lite:
 $\epsilon^*$ stays at 0.10 on the hand-written pair and rises to 0.15 on the fitted pair, both now
-set by GATEOPS. We therefore report $\epsilon^*$ as 0.10--0.15. A sensible cheater stays just below
-it. Swapping 5\% of requests still saves \$25--\$44 per \$1,000, and no auditor here catches that
-without more false alarms than a customer would accept.
+set by GATEOPS. We therefore report $\epsilon^*$ as 0.10--0.15 for single-session audits and 0.02--0.03 for pooled
+ones. Swapping 5\% of requests saves \$25--\$44 per \$1,000; a pooled audit catches that for under
+\$0.40, while a single-session audit cannot.
 
 \textbf{Cheating or load balancing?} A3 at $\epsilon = 0.10$ sends 10\% of traffic to a cheaper
 model. A11 spreads traffic across honest providers of the correct model. The first is fraud; the
@@ -67,7 +75,10 @@ fitted pair, where it flags 100\% of load-balancing and 5\% of cheating sessions
 FUSE inherits the problem: on the fitted pair it flags half of the honest load-balancing sessions
 and none of the cheating ones. The dependence-safe average of FUSE's e-values does not fix this: it
 still flags 44\% of honest load-balancing sessions on the fitted pair, and no cheating session at
-$\epsilon = 0.10$ on either pair. Timing and metadata show whether traffic is \emph{mixed}, not
+$\epsilon = 0.10$ on either pair. The honest second provider's timing is invented, since none could
+be measured, and it drives this result: set 18\% faster than the genuine model (the measured gap
+between the two real models), GATEOPS still flags 74--100\% of load-balancing sessions; set
+identical, it flags none. Timing and metadata show whether traffic is \emph{mixed}, not
 whether the model is \emph{wrong}, and load balancing mixes traffic by design. The text-based
 auditors can tell the two apart here only because our simulated second provider returns almost the
 same text. A real second provider, running different software or a compressed copy, would change the

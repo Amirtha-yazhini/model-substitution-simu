@@ -18,8 +18,7 @@ auditors [@cai2025] compare accuracy on standard tests (MMLU, GPQA, GSM8K); the 
 concludes that software-only auditing is unreliable and recommends secure hardware.
 *Probability-based* auditors need deeper access: RUT [@zhu2025rut] checks the emitted tokens
 against a reference model that the auditor runs locally, and DiFR [@difr2025] needs the
-provider to share its random seed so that outputs can be checked against a trusted reference. Other work identifies what a model is [@stemma2026; @archinfer2026], rather
-than whether it was swapped.
+provider to share its random seed so that outputs can be checked against a trusted reference.
 
 **Replication.** A study that fixed its thresholds before testing [@holdout2026] matched
 model families by their reported prompt token counts. It was perfect on development data, but on
@@ -34,7 +33,8 @@ knows the method [@zhu2025rut]. IRIS, the closest to our work, tests gateways th
 own probes by keyword or by answer shape, and names a fully adaptive gateway as the key open
 threat [@iris2026]. We add three things: one adaptive cheater run against
 every auditor, one shared set of recorded responses that every auditor sees byte for byte, and
-honest load balancing scored as a false-alarm test, which no earlier evaluation does. Commercial routers already spread traffic across providers by
+honest load balancing within one session scored as a false-alarm test (KBF's same-model controls
+test honest deployments one at a time [@fang2026kbf]). Commercial routers already spread traffic across providers by
 default [@openrouter_exacto], so an auditor that flags mixed traffic will flag them too.
 
 > REFERENCES (all arXiv entries verified against arxiv.org on 2026-09-27; see refs.bib):

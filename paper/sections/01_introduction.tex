@@ -19,10 +19,8 @@ timing and metadata that come back, whether the advertised model answered.
 At least eight such auditors have been published since April 2025
 \cite{cai2025,zhu2025rut,lin2026gatescope,fang2026kbf,bruckner2026,iris2026,difr2025,holdout2026}.
 Each was tested on its own data, against its own simulated cheater, and usually with thresholds
-chosen on the same data it reports. A replication study that fixed its thresholds in
-advance~\cite{holdout2026} showed why this matters: a method that was perfect on its development
-data recognised only half of the same-family model pairs in fresh data, and could not score half of
-the fresh cases at all. The auditors have never been compared on the same data against the same
+chosen on the same data it reports; a replication with thresholds fixed in advance found far weaker
+results~\cite{holdout2026}. The auditors have never been compared on the same data against the same
 cheater. Only one has been tested against a gateway that tries to spot its test requests, and only
 against its own probes~\cite{iris2026}.
 
@@ -55,7 +53,8 @@ spreading traffic across several legitimate providers of $M$, is allowed and sho
   because models now ``think'' silently before answering.
 \item \emph{What cheating costs and what catching it costs.} Hiding from tests beats every auditor
   as published and, measured on real chat traffic, costs the cheater almost nothing; disguised
-  tests catch it in simulation at five times the audit cost. False alarms, not cost, stop any
-  auditor from catching cheating on fewer than about 10\% of requests. And timing-based auditors
-  cannot tell cheating from honest load balancing.
+  tests catch it in simulation at five times the audit cost. Judged one session at a time, no
+  auditor catches cheating on fewer than 10--15\% of requests without too many false alarms;
+  pooled into one test, sessions catch 2--3\% for under 40 cents. And timing-based auditors cannot
+  tell cheating from honest load balancing when honest providers differ in speed.
 \end{itemize}

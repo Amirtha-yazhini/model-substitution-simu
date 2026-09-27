@@ -17,8 +17,7 @@ auditors~\cite{cai2025} compare accuracy on standard tests (MMLU, GPQA, GSM8K); 
 concludes that software-only auditing is unreliable and recommends secure hardware.
 \emph{Probability-based} auditors need deeper access: RUT~\cite{zhu2025rut} checks the emitted tokens
 against a reference model that the auditor runs locally, and DiFR~\cite{difr2025} needs the
-provider to share its random seed so that outputs can be checked against a trusted reference. Other work identifies what a model is~\cite{stemma2026,archinfer2026}, rather
-than whether it was swapped.
+provider to share its random seed so that outputs can be checked against a trusted reference.
 
 \textbf{Replication.} A study that fixed its thresholds before testing~\cite{holdout2026} matched
 model families by their reported prompt token counts. It was perfect on development data, but on
