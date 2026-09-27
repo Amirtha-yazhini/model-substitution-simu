@@ -153,3 +153,29 @@ and the sealed findings stated first and on their own.
 | M4 | Drift | Add as limitation; ideally, time-split the live data to measure drift | Low / Medium | Optional (live data exist) |
 | M6 | Post-hoc sprawl | Restructure: sealed findings first, one "post-hoc checks" subsection | Medium | No |
 | minor 5, 8 | Simulator parameters; contribution list | One-line parameter summary; tighten bullets to three | Low | No |
+
+---
+
+## Outcome: what was done for each point (2026-09-27)
+
+New scripts `22_pooled_all_arms.py` and `23_live_drift.py`; results in
+`results/v2/tables/{pooled_all_arms,live_drift}.md`. No sealed number changed.
+
+| # | Outcome |
+|---|---|
+| M1 | **Confirmed and fixed.** The pooled test on every arm: pooled GATEOPS flags 100% of honest load-balancing audits, pooled BENCH catches 0% of A10, and IRIS-lite (0.03–0.07) flags 100% of honest sampling changes (A4) and cannot separate the real models. The only pooled auditor that stays quiet on A4 and A11 and catches A10 is KBF: ε = 0.07 with 64 sessions (\$0.08 + \$0.40 calibration), and A5 still beats it. The abstract and conclusion now say pooling lowers the floor "only to 7% for detectors that stay quiet on honest traffic". |
+| M2 | **Fixed.** The hand-written 2% no longer appears in the abstract or introduction; the post-hoc section gives the full picture. |
+| M3 | **Fixed.** Fig. 2's caption now says it covers audits that judge each session alone and points to the pooled analysis. |
+| M4 | **Measured.** Honest Groq latency drifted within 25 minutes of the live run (first vs second half, KS 0.20, p = 0.046). The paper says pooled timing needs calibration taken at the same time; limitation (ii) now names drift. |
+| M5 | **Fixed.** The threat model names account-level targeting as a stronger evasion; the disguised-probe paragraph says disguise does not help against it; limitation (v) and the conclusion ("test requests that look like normal traffic from ordinary accounts") reflect it. |
+| M6 | **Restructured.** New Section 6, "Checks Added After Sealing", holds every post-hoc analysis (A5's cost, disguised probes, sensitivity, pooling, confound timing, dependence-safe FUSE). Sections 4–5 now contain only sealed and real-endpoint results. The abstract states the sealed findings first and the post-hoc ones last, labelled. |
+| minor 1 | Calibration cost (\$0.40 for 300 KBF sessions) is now stated next to the pooled cost. |
+| minor 2 | The IRIS-lite caveat now directly follows the single-session ε\* it qualifies. |
+| minor 3 | "At least six black-box auditors … alongside a method that needs the provider's cooperation"; the holdout study is cited as a replication. |
+| minor 4 | Pooling is covered in Section 6; A5 still beats the only specific pooled auditor (KBF). |
+| minor 5 | The design section now states the simulator's key parameters (favourite answers, 54% vs 86% accuracy, 3× vs measured 18% speed gap). |
+| minor 6 | Related work marks GateScope as the one peer-reviewed study. |
+| minor 7 | Fig. 4 caption: "no auditor exceeds 0.56 (0.61 on the fitted pair)". |
+| minor 8 | Contributions cut to three bullets. |
+
+To fit: the paragraph on the "wrong model / undisclosed routing / wrong bill" split remains in Section 5; one sentence of the conclusion was removed.

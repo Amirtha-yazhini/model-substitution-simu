@@ -3,8 +3,8 @@
 > NOTE: budget 1.75 pages. Synced from sections/*.tex after the plain-language rewrite; edit here and send back.
 
 We report detection quality as AUROC: the chance that a cheating session scores higher than an
-honest one. 0.5 is a coin flip and 1.0 is perfect. Sections [grid]–[fpr] and
-Section [econ] use the simulator; the others use real endpoints.
+honest one. 0.5 is a coin flip and 1.0 is perfect. Sections [grid]–[fpr], [econ] and [posthoc]
+use the simulator; the others use real endpoints.
 
 ## Which auditors can run on real endpoints
 We tested 14 free model endpoints from three providers; 11 worked. For each we checked whether it
@@ -31,20 +31,8 @@ run catches full substitution (A1) perfectly (AUROC 1.00). Three results matter 
 on the hand-written pair or 0.61 on the fitted pair, and no 95% bootstrap interval reaches above
 0.70. Every
 auditor's questions are short and repeated, and some contain phrases like "reply with only". That
-is what makes them cheap, and exactly what A5 looks for. Two follow-up checks, run after sealing,
-show both sides of this. First, on chat traffic hiding is nearly free for the cheater: replaying 172,418
-real user requests from the WildChat dataset through A5's classifier, only 3.3% of requests (0.6%
-of token cost) look like tests, so A5 keeps over 99% of the saving of always cheating. API traffic
-can differ: in Azure's production code-completion trace [@splitwise2024], 76% of requests
-generate at most 24 tokens, so A5 could serve many honestly if they also repeat, which the trace
-does not record. Second, disguised tests
-work: when OTE asks the same eight questions inside long, varied, everyday requests that are never
-repeated, A5 no longer spots them and OTE catches it in every session (AUROC 1.00, with no honest
-session flagged), but each session costs 4.9$\times$ more. This holds by construction in our simulator, which picks
-an answer from the question alone and replies with a bare token; a real model would answer in prose,
-and the surrounding request may shift its answers. IRIS reports that real models stay identifiable
-under disguise, but only partly across different framings [@iris2026]. A gateway that recognises what a question *means*, not how it looks,
-remains untested.
+is what makes them cheap, and exactly what A5 looks for. Section [posthoc] prices this
+evasion and tests a countermeasure.
 
 *Knowing the benchmarks beats only the benchmark auditor.* A fixed list of public benchmark
 questions (A10) drops BENCH to AUROC 0.48. Auditors that write their own questions still score 1.00.
@@ -57,7 +45,7 @@ Section [econ] discusses. The perfect scores against A6–A9 say little: these a
 the cheaper model, which our simulator makes very different from the genuine one. Against A6, which replays saved answers and
 so has no real response time, GATEOPS correctly says *uninformative* instead of passing it.
 
-> FIGURE F4 (fig_evasion): AUROC of each auditor (rows) against each arm (columns), v2, hand-written model pair. * marks honest arms; hatched cells mean the auditor could not run. Column A5: no auditor exceeds 0.56.
+> FIGURE F4 (fig_evasion): AUROC of each auditor (rows) against each arm (columns), v2, hand-written model pair. * marks honest arms; hatched cells mean the auditor could not run. Column A5: no auditor exceeds 0.56 (0.61 on the fitted pair).
 
 ## False alarms, v1 and v2
 With the v1 rules (100 calibration sessions, flag on equal scores), GATEOPS wrongly flagged 10.0%

@@ -17,9 +17,9 @@ today, and the customer cannot look inside the gateway. What the customer can do
 answers. A black-box *auditor* sends test requests (*probes*) and decides, from the text,
 timing and metadata that come back, whether the advertised model answered.
 
-At least eight such auditors have been published since April 2025
- [@cai2025; @zhu2025rut; @lin2026gatescope; @fang2026kbf; @bruckner2026; @iris2026; @difr2025; @holdout2026].
-Each was tested on its own data, against its own simulated cheater, and usually with thresholds
+At least six black-box auditors have been published since April 2025
+ [@cai2025; @zhu2025rut; @lin2026gatescope; @fang2026kbf; @bruckner2026; @iris2026], alongside a method that
+needs the provider's cooperation [@difr2025]. Each was tested on its own data, against its own simulated cheater, and usually with thresholds
 chosen on the same data it reports; a replication with thresholds fixed in advance found far weaker
 results [@holdout2026]. The auditors have never been compared on the same data against the same
 cheater. Only one has been tested against a gateway that tries to spot its test requests, and only
@@ -29,7 +29,9 @@ against its own probes [@iris2026].
 $M$. For each request the gateway decides where it goes: to $M$, to a cheaper substitute $M'$, to
 another provider of $M$, or to a cache of earlier answers. It can change the reported model name,
 the `usage` token counts and the `system_fingerprint` field, and it can add delay. It
-sees every request, so it can guess which requests are tests from how they look. It does not know
+sees every request, so it can guess which requests are tests from how they look. It also knows which
+customer account sent each request; we model evasion per request (A5), and a gateway that serves the
+genuine model to any account that ever sends test-like traffic would be stronger still. It does not know
 the auditor's exact probes or thresholds, but it knows the published methods and the public
 benchmarks. Its goal is to save as much as possible without being caught. We assume the customer can obtain
 honest answers from the genuine model, for example from its first-party provider, to use as a
@@ -40,20 +42,14 @@ customer can always measure, and the text is the only other signal. Honest varia
 spreading traffic across several legitimate providers of $M$, is allowed and should not be flagged.
 
 **Contributions.**
-- *A shared test gateway.* SHIM, a drop-in OpenAI-compatible gateway that can cheat in
-  twelve ways. Three of them (restyling cheap answers, recognising benchmark questions, and
-  honest load balancing) have never been evaluated before, and a fourth (hiding from tests) only
-  against one auditor's own probes. A hidden log records which
-  model really answered each request.
-- *A fair comparison of six auditors.* Five published methods, rebuilt from their papers,
-  and one new method that combines them. All thresholds were fixed and fingerprinted before testing,
-  and an auditor that cannot run reports *uninformative*, never *pass*.
-- *Which auditors work on real endpoints.* On 11 free endpoints, a method that needs token
-  probabilities runs on none, and the cheapest published method runs as described on only 4,
-  because models now "think" silently before answering.
-- *What cheating costs and what catching it costs.* Hiding from tests beats every auditor
-  as published and, measured on real chat traffic, costs the cheater almost nothing; disguised
-  tests catch it in simulation at five times the audit cost. Judged one session at a time, no
-  auditor catches cheating on fewer than 10–15% of requests without too many false alarms;
-  pooled into one test, sessions catch 2–3% for under 40 cents. And timing-based auditors cannot
-  tell cheating from honest load balancing when honest providers differ in speed.
+- *A shared, sealed testbed.* SHIM, a drop-in gateway that can cheat in twelve ways and logs
+  which model really answered, and ARENA, which runs six auditors under thresholds fixed and
+  fingerprinted before testing; an auditor that cannot run reports *uninformative*, never
+  *pass*.
+- *Deployability on real endpoints.* On 11 free endpoints a logprob-based auditor runs on
+  none and the cheapest published method on 4, because models now "think" silently before
+  answering; the real speed gap between a large and a small model is 18%, not 3$\times$.
+- *Three limits of black-box auditing.* Test-shaped evasion beats every auditor; judged one
+  session at a time, no auditor catches cheating below 10–15%; and timing cannot tell cheating from
+  honest load balancing. Post-hoc checks (Section [posthoc]) price the evasion and show how
+  far pooling and disguised tests move these limits.

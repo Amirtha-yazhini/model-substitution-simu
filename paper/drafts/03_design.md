@@ -46,8 +46,10 @@ routers do by default [@openrouter_exacto]. We use it to count false alarms.
 Behind SHIM sits either a *recording* of real responses, collected once from free endpoints so
 that every auditor sees exactly the same data, or a *simulator* that imitates how each model
 behaves (its favourite answers, writing habits, accuracy and speed) and can produce as many sessions
-as needed. We use two simulated model pairs: one with hand-written behaviour, and one whose answers
-and speeds are fitted to the real recordings (Section [results]).
+as needed. We use two simulated model pairs. In the hand-written pair the cheaper model has different
+favourite answers (57 rather than 42 for "a number from 1 to 100"), answers 54% of factual items
+correctly against 86%, and is three times faster; the fitted pair replaces answers and speeds with
+those measured on the real recordings (Section [results]), an 18% speed gap.
 
 **ARENA.** Six auditors share one interface. Each returns a score, a p-value, and a flag saying
 whether it could run at all (Tab. auditors). Five are our own rebuilds of published
@@ -56,7 +58,7 @@ auditor's p-value into an *e-value*, a measure of evidence that can be multiplie
 and raises a flag when the product passes $1/\alpha$. A classical result (Ville's inequality) then
 keeps the false-alarm rate below $\alpha$ [@vovk2021evalues; @ville1939], but only if the auditors'
 evidence is independent. Ours is not, since all auditors read the same session, so we also report the
-*average* of the e-values, which stays valid under any dependence (Section [econ]).
+*average* of the e-values, which stays valid under any dependence (Section [posthoc]).
 
 > TABLE auditors caption: The six auditors: five rebuilt from published papers, one new.
 

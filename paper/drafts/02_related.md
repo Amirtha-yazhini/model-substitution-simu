@@ -12,7 +12,7 @@ family disagree; on 16 endpoints it flags all 155 substitutions it tested withou
 honest control, and catches dilution of 5–10% when the two models differ clearly.
 IRIS [@iris2026] asks for random numbers or strings, trains a random forest on 179 surface
 features of the answers, and sizes its own query budget; it also estimates the dilution rate. *Metadata-based* auditors look at how the service
-behaves. GateScope [@lin2026gatescope] audited ten commercial gateways using text, 25-turn memory,
+behaves. GateScope [@lin2026gatescope], the one peer-reviewed study among these, audited ten commercial gateways using text, 25-turn memory,
 billing mismatches and variation in response time. *Benchmark-based*
 auditors [@cai2025] compare accuracy on standard tests (MMLU, GPQA, GSM8K); the same paper
 concludes that software-only auditing is unreliable and recommends secure hardware.

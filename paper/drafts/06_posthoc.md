@@ -1,0 +1,42 @@
+# Checks Added After Sealing
+
+> NOTE: budget 0.75 pages. Synced from sections/*.tex after the plain-language rewrite; edit here and send back.
+
+These checks were designed after the sealed results were known, to answer reviewers' questions.
+None changes a sealed number; all are exploratory.
+
+**What does hiding cost the cheater?** A5 gives up its saving on every request that looks like
+a test. Replaying 172,418 real user requests from the WildChat
+dataset through A5's classifier, only 3.3% of requests (0.6% of token cost) look like tests, so on
+chat traffic A5 keeps over 99% of the saving of always cheating. API traffic can differ: in Azure's
+production code-completion trace [@splitwise2024], 76% of requests generate at most 24 tokens, so
+A5 could serve many honestly if they also repeat, which the trace does not record.
+
+**Can disguised tests beat it?** When OTE asks its eight questions inside long, varied, everyday
+requests that are never repeated, A5 no longer spots them, and OTE catches it in every session (AUROC
+1.00, no honest session flagged), at 4.9$\times$ the cost per session. This holds by construction in
+our simulator, which picks an answer from the question alone and replies with a bare token; a real
+model answers in prose, and the surrounding request may shift its answers. IRIS finds real models
+stay identifiable under disguise, but only partly across framings [@iris2026]. Disguise also does
+not help against a gateway that targets the auditor's account rather than its requests.
+
+**Is the 10–15% floor a property of auditing?** Varying the sealed choices, a power target of
+50–90% and a false-alarm budget of 1–10% keep $\epsilon^*$ between 0.07 and 0.15 (up to 0.25
+without IRIS-lite at a 1% budget). The floor falls further only if sessions are pooled: fixing $k$ in advance and
+running one one-sided Welch $t$-test of the $k$ sessions' mean score against the 300 honest
+calibration sessions keeps the false-alarm rate at or below 5% (checked on random splits of our 800
+honest sessions). Pooled, GATEOPS catches $\epsilon = 0.02$–$0.03$ for under \$0.40 and BENCH
+0.03, but pooled GATEOPS flags 100% of honest load-balancing audits and pooled BENCH catches none
+of the benchmark-aware A10. IRIS-lite reaches 0.03–0.07 but flags every honest change of sampling
+settings (A4) and cannot separate the real models (Section [real]). The only pooled auditor
+that stays quiet on A4 and A11 and catches A10 is KBF, at $\epsilon = 0.07$ with 64 sessions (\$0.08,
+plus \$0.40 for the 300 honest calibration sessions); A5 still beats it. Pooled timing also needs
+its calibration taken at the same time as the audit: in the live run, honest latency drifted between
+the first and second halves of 25 minutes (KS 0.20, $p = 0.046$).
+
+**Does the confound depend on the invented timing?** Yes. The honest second provider behind A11
+could not be measured, so its timing is hand-written. Set 18% faster than the genuine model (the
+measured gap between the two real models), GATEOPS still flags 74–100% of load-balancing sessions;
+set identical, it flags none. FUSE's dependence-safe average of e-values, which needs no
+independence assumption, still flags 44% of load-balancing sessions on the fitted pair and no
+cheating session at $\epsilon = 0.10$.

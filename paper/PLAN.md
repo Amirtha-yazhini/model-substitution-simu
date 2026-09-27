@@ -51,7 +51,8 @@ if it is over 6 pages.
 | 3 | System design: SHIM, ARENA, sealed protocol | 1.0 pp | `drafts/03_design.md` |
 | 4 | Results: coverage, grid, live run | 1.75 pp | `drafts/04_results.md` |
 | 5 | Economics and the confound | 1.0 pp | `drafts/05_economics.md` |
-| 6 | Limitations and conclusion | 0.5 pp | `drafts/06_conclusion.md` |
+| 6 | Checks added after sealing (exploratory) | 0.75 pp | `drafts/06_posthoc.md` |
+| 7 | Limitations and conclusion | 0.5 pp | `drafts/07_conclusion.md` |
 | | References | 0.5 pp | `refs.bib` |
 | | **Total** | **6.0 pp** | |
 
