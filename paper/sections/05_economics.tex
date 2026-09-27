@@ -2,8 +2,8 @@
 \section{Cost of Cheating vs.\ Cost of Catching It}\label{sec:econ}
 
 \textbf{Break-even.} If the gateway swaps a share $\epsilon$ of requests, it saves
-$\$1{,}000 \cdot \epsilon \cdot (1 - r)$ for every \$1,000 the customer spends, where $r = 0.115$ is
-the price of the cheaper model relative to the genuine one: 0.115 for the Llama pair that prices our
+$\$1{,}000 \cdot \epsilon \cdot (1 - r)$ for every \$1,000 the customer spends, where $r$ is the
+price of the cheaper model relative to the genuine one: 0.115 for the Llama pair that prices our
 simulator, 0.50 for the real gpt-oss pair. We compare this with the cost of running enough audit
 sessions to catch the cheating 80\% of the time, using measured token counts and public prices
 (Fig.~\ref{fig:F2}).
@@ -18,8 +18,8 @@ cause too many false alarms. In the shaded region no acceptable audit works.}
 \end{figure}
 
 \emph{Cost is never the problem.} One audit session costs between \$0.0013 (KBF) and \$0.014
-(FUSE). Wherever an auditor can reach 80\%, the total is under one cent, while the cheater saves tens
-of dollars. On price alone, auditing always pays.
+(FUSE). Wherever an auditor can reach 80\%, the total is under ten cents (at most \$0.08), while the
+cheater saves tens of dollars. On price alone, auditing always pays.
 
 \emph{False alarms are the problem.} Running more sessions catches more cheating, but also raises
 more false alarms. If one honest session is wrongly flagged with probability $f$, then $k$ sessions
@@ -76,8 +76,8 @@ text too, and the difference would shrink.
 So ``model substitution'' is really three different problems, and each needs different evidence:
 \begin{itemize}
 \item \emph{Wrong model:} the model itself is different (A1, A2, A7). Text-based auditors can see it.
-\item \emph{Undisclosed routing:} traffic is split, but the customer is not told (A3 vs.\ A11). The
-  two differ only in intent, which nothing on the customer's side can measure.
+\item \emph{Undisclosed routing:} traffic is split, but the customer is not told (A3 vs.\ A11).
+  Timing cannot separate the two; text can only while every honest provider returns the same text.
 \item \emph{Wrong bill:} the invoice does not match the service (A8). This needs an invoice, and
   free tiers do not issue one.
 \end{itemize}
