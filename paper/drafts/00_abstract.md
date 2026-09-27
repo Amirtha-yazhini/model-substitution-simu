@@ -3,8 +3,7 @@
 > NOTE: budget ~150 words. This draft is ~165. Written first so the whole paper has a target; revise last.
 
 LLM APIs bill for a named model, but nothing in a response proves which model produced it. An
-intermediary can serve a cheaper model on some requests and still bill for the expensive one. This
-is an accounting-integrity failure. At least eight black-box detectors have been proposed, each
+intermediary can serve a cheaper model on some requests and still bill for the expensive one. At least eight black-box detectors have been proposed, each
 evaluated on its own testbed and against its own adversary. We built SHIM, an OpenAI-compatible
 gateway with twelve switchable cheating strategies and a hidden ground-truth ledger, and ARENA,
 which runs five reimplemented detectors and a new e-value fusion under thresholds sealed by SHA-256

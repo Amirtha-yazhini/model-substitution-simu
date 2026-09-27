@@ -13,12 +13,11 @@ quantised copy, or a mix of both, and still return the name the client asked for
 large. For the token mix used in this paper, the substitute costs 11.5% of the genuine model, so a
 gateway that swaps on one request in ten saves about \$88 per \$1,000 of billed traffic.
 
-We treat this as an *accounting-integrity* failure at an *untrusted network intermediary*. In
-authentication, authorization and accounting (AAA) terms, the client has authenticated and been
-authorised, but the accounting record says "model X" and nothing binds that record to the
-computation that was performed. Hardware attestation could supply that binding [@cai2025], but
-it is not deployed by gateways today. What clients have instead are black-box *auditors*:
-statistical tests that decide from responses alone whether the advertised model answered.
+The client pays for "model X", but the only record of what ran is the gateway's own word. The
+provider behind the gateway could attest to the computation in hardware [@cai2025], but gateways
+do not offer this today, and the client cannot inspect the gateway. What the client can do is test
+the responses. A black-box *auditor* sends probe requests and decides, from the text, timing and
+metadata that come back, whether the advertised model answered.
 
 At least eight such auditors have appeared since April 2025
 [@cai2025; @zhu2025rut; @lin2026gatescope; @fang2026kbf; @bruckner2026; @iris2026; @difr2025].
