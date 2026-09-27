@@ -10,9 +10,8 @@ describe the simulator.
 (ii) *One real session per endpoint, and no drift.* Free quotas allowed one 240-request session
 per endpoint, so thresholds could not be set on real traffic, and the simulator's timing never drifts
 while real timing does.
-(iii) *Simplified rebuilds.* None of the auditors is the authors' code. OTE uses 8 of 40
-questions, IRIS-lite 16 of 179 features, KBF and BENCH 15 and 12 items, and GATEOPS leaves out
-GateScope's memory test. Each result is a lower bound on the original method.
+(iii) *Simplified rebuilds.* None of the auditors is the authors' code (e.g. OTE uses 8 of 40
+questions, IRIS-lite 16 of 179 features), so each result is a lower bound on the original method.
 (iv) *Free endpoints, one provider, one moment.* Groq served nearly all real traffic, and the
 live test used 96 requests per arm; honest load balancing could not be tested live.
 (v) *Simulated cheaters.* A5 is our own design and works per request; a gateway that targets
@@ -20,12 +19,16 @@ auditing accounts would be stronger. The checks in Section [posthoc] are explora
 
 **Conclusion.** Auditing an LLM gateway is cheap, but not robust as published. A gateway that
 spots test-shaped requests beats every auditor and, on chat traffic, gives up almost nothing. Judged
-one session at a time, no auditor catches cheating below 10–15%; pooling sessions reaches 7% only
-for an auditor that stays quiet on honest traffic, and lower only for auditors that flag honest
-routing or lose to benchmark-aware cheating. Timing cannot tell cheating from honest load balancing.
+one session at a time, no auditor catches cheating below 10–15%. Pooling hundreds of sessions
+reaches 5% with the most specific auditor, at the price of flagging about one honest load-balancing
+audit in ten; lower rates need auditors that flag honest routing or lose to benchmark-aware
+cheating. Timing cannot tell cheating from honest load balancing.
 Trustworthy
 billing for LLM APIs will need test requests that look like normal traffic from ordinary accounts,
 gateways that disclose their routing, and metering the customer can verify.
+
+**Ethics.** We report only aggregates from WildChat and the Azure trace, stayed within free-tier
+limits, and accuse no provider.
 
 **Artifact.** The gateway, auditors, sealed rules, recorded responses and every figure are
 available at an anonymised repository: [ANONYMISED LINK]. Everything except

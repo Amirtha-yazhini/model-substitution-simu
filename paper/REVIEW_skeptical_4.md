@@ -128,3 +128,25 @@ as "to test the robustness of the sealed findings".
 | M2 | Pooled floor capped by k ≤ 128 | State the cap (text), or simulate more A3 sessions at ε = 0.03–0.07 for KBF (~1,000 sessions, ~5 min) | Low / Medium | Optional, simulator only |
 | minor 2, 5 | Local gateway, timing claim | One sentence each | Trivial | No |
 | minor 3, 4, 6, 7, 8 | Post-hoc choices, FUSE, ethics, floating sentence, section scope | Short text edits | Low | No |
+
+---
+
+## Outcome: what was done for each point (2026-09-27)
+
+New script `24_kbf_floor.py`; result in `results/v2/tables/kbf_floor.md`. No sealed number changed.
+
+| # | Outcome |
+|---|---|
+| M1 | **Fixed.** A2 is marked "?" in the arms table, the caption calls it ambiguous, and the design section explains why (it uses the same honest second provider as A11) and says no conclusion is drawn from it. |
+| M2 | **Confirmed and re-measured.** KBF-only sessions reproduce committed KBF scores exactly (30/30, once the gateway's request counter and A11's routing counter start where a full session leaves them). With 1,000 fresh sessions per case: KBF catches ε = 0.07 with 64 sessions and 0.05 with 256–512 (\$0.34–\$0.68 plus \$0.40–\$1.32 calibration), never 0.03 even with 1,000; at that depth it flags 9–11% of honest load-balancing audits. The larger sample also corrects 22's KBF numbers (its 200-session pools understated both KBF's power and its A11 flag rate). Abstract and conclusion now say "pooling hundreds of sessions catches 5% cheating while flagging one honest load-balancing audit in ten". The calibration-resolution limit is stated. |
+| M3 | **Fixed.** Taxonomy rewritten: wrong model (fully or partly: A1, A7, A3), detectable from text given enough sessions; honest routing (A11), which should not be flagged and whose disclosure is a policy question; wrong bill (A8). |
+| M4 | **Fixed.** Section 6 now opens "to test how far those results hold". |
+| minor 1 | Abstract cut to 144 words. |
+| minor 2, 5 | Live section says the SHIM servers ran on the client's machine; the threat model says timing is measured through the gateway's own network and queueing noise. |
+| minor 3 | Section 6 states the choices: one of fourteen WildChat shards; 30 framings we wrote; the t-test as the simplest test allowing for noise in both samples; the 200-session cap and why more sessions were simulated. |
+| minor 4 | Design section: "FUSE turns out to be a negative result." |
+| minor 6 | One-line ethics statement before the artifact paragraph. |
+| minor 7 | The floating sentence now reads "So a threshold set from only 100 honest sessions can miss its target by a wide margin, which v1 did." |
+| minor 8 | "Most of Section 6 uses the simulator." |
+
+To stay at 6 pages: figures scaled to 90% of column width; the replication paragraph, the v1/v2 description in Section 3, limitation (iii), and several single sentences were shortened.

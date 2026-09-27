@@ -22,22 +22,18 @@ $\epsilon = 0.10$, a single session almost never catches anything: at $\epsilon 
 auditor catches 6% of sessions on the hand-written pair and 1% on the fitted pair, so 15 sessions
 are not enough to reach 80%. The lowest cheating rate any acceptable audit can catch is therefore
 $\epsilon^* = 0.10$ on both simulated pairs, with a bootstrap 95% interval of [0.10, 0.10] (on a grid that steps 0.07, 0.10, 0.15).
-IRIS-lite reaches it, catching 34% of single sessions and needing 4 sessions (hand-written pair), or
-56% and 2 sessions (fitted pair), for \$0.003–\$0.006. The price ratio does not move $\epsilon^*$,
-because audit cost is far below the saving at either ratio.
+IRIS-lite reaches it with 2–4 sessions for \$0.003–\$0.006. The price ratio does not move
+$\epsilon^*$, because audit cost is far below the saving at either ratio.
 
 One caveat changes $\epsilon^*$. IRIS-lite sets it on both pairs, but on real recordings
 it cannot tell the two models apart (Section [real]); in the simulator it relies on
 hand-written writing habits. As an extra check done after sealing, we removed IRIS-lite:
 $\epsilon^*$ stays at 0.10 on the hand-written pair and rises to 0.15 on the fitted pair, both now
 set by GATEOPS. We therefore report $\epsilon^*$ as 0.10–0.15 for audits that judge each session alone. Swapping
-5% of requests still saves \$25–\$44 per \$1,000, and no such audit catches it without more false
-alarms than a customer would accept. Section [posthoc] asks whether pooling sessions helps.
+5% of requests still saves \$25–\$44 per \$1,000 undetected; Section [posthoc] pools sessions.
 
 **Cheating or load balancing?** A3 at $\epsilon = 0.10$ sends 10% of traffic to a cheaper
-model. A11 spreads traffic across honest providers of the correct model. The first is fraud; the
-second is normal load balancing, which routers do by default. (Fig. F6) compares
-them over 200 sessions each.
+model. A11 spreads traffic across honest providers of the correct model. (Fig. F6) compares them over 200 sessions each.
 
 > FIGURE F6 (fig_confound): Share of sessions flagged for A3 (cheating on 10% of requests) and A11 (honest load balancing), v2 hand-written pair, 200 sessions each. Top row: AUROC for telling them apart. The timing auditor flags honest load balancing far more often than cheating.
 
@@ -51,13 +47,15 @@ auditors can tell the two apart here only because our simulated second provider 
 same text. A real second provider, running different software or a compressed copy, would change the
 text too, and the difference would shrink.
 
-So "model substitution" is really three different problems, and each needs different evidence:
-- *Wrong model:* the model itself is different (A1, A2, A7). Text-based auditors can see it.
-- *Undisclosed routing:* traffic is split, but the customer is not told (A3 vs. A11).
-  Timing cannot separate the two; text can only while every honest provider returns the same text.
-- *Wrong bill:* the invoice does not match the service (A8). This needs an invoice, and
-  free tiers do not issue one.
-Only the first can be solved by black-box auditors. The second needs gateways to disclose their
-routing, and the third needs metering the customer can verify. This reaches the same conclusion as
-Cai et al. [@cai2025], who recommend secure hardware, from the opposite direction: some of what
+So "model substitution" mixes three questions that need different evidence:
+- *Wrong model:* the model is cheaper on all requests (A1, A7) or some of them (A3). Text
+  can reveal it, given enough sessions (Section [posthoc]).
+- *Honest routing:* traffic is split across honest providers of the right model (A11). This
+  should not be flagged, and timing cannot tell it from a wrong model; whether it must be disclosed
+  is a policy question, not a detection problem.
+- *Wrong bill:* the invoice does not match the service (A8). This needs an invoice, and free
+  tiers do not issue one.
+Black-box auditing can address only the first, and only with text. Honest routing needs a disclosure
+rule, and a wrong bill needs metering the customer can verify. This reaches the conclusion of Cai
+et al. [@cai2025], who recommend secure hardware, from the opposite direction: some of what
 auditors are asked to detect cannot be seen from the customer's side at all.

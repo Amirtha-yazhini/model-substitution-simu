@@ -20,11 +20,9 @@ concludes that software-only auditing is unreliable and recommends secure hardwa
 against a reference model that the auditor runs locally, and DiFR [@difr2025] needs the
 provider to share its random seed so that outputs can be checked against a trusted reference.
 
-**Replication.** A study that fixed its thresholds before testing [@holdout2026] matched
-model families by their reported prompt token counts. It was perfect on development data, but on
-fresh data it recognised only half of the same-family pairs, and 6 of 12 fresh pairs could not be
-scored because of rate limits and missing usage data. We follow its practice of fixing thresholds in advance, and apply it
-to six methods instead of one.
+**Replication.** A study that fixed its thresholds before testing [@holdout2026] was perfect
+on development data but recognised only half of the same-family pairs on fresh data, and could not
+score 6 of 12. We follow its practice and apply it to six methods.
 
 **What is missing.** Most auditors were tested only against a gateway that cheats the same way
 no matter who is asking, and no two were run on the same data. Two papers discuss evasion. RUT is

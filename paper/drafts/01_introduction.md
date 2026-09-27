@@ -38,7 +38,8 @@ honest answers from the genuine model, for example from its first-party provider
 reference. The customer sees only
 what comes back: the text, how long the answer took, the `usage` block, the fingerprint, and
 token probabilities (logprobs) if the endpoint provides them. Response time is a side channel the
-customer can always measure, and the text is the only other signal. Honest variation, such as
+customer can always measure, though through the gateway's own network and queueing noise; the text is
+the only other signal. Honest variation, such as
 spreading traffic across several legitimate providers of $M$, is allowed and should not be flagged.
 
 **Contributions.**

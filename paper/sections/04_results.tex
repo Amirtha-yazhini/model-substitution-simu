@@ -3,8 +3,8 @@
 \section{Results}\label{sec:results}
 
 We report detection quality as AUROC: the chance that a cheating session scores higher than an
-honest one. 0.5 is a coin flip and 1.0 is perfect. Sections~\ref{sec:grid}--\ref{sec:fpr}, \ref{sec:econ} and \ref{sec:posthoc}
-use the simulator; the others use real endpoints.
+honest one. 0.5 is a coin flip and 1.0 is perfect. Sections~\ref{sec:grid}--\ref{sec:fpr}, \ref{sec:econ} and most of
+\ref{sec:posthoc} use the simulator; the others use real endpoints.
 
 \subsection{Which auditors can run on real endpoints}\label{sec:coverage}
 We tested 14 free model endpoints from three providers; 11 worked. For each we checked whether it
@@ -22,7 +22,7 @@ because the models changed, not the method.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{fig_coverage}
+\includegraphics[width=0.9\columnwidth]{fig_coverage}
 \caption{Share of the 11 working free endpoints on which each auditor can run. RUT needs token
 probabilities (0/11); OTE with its published 16-token limit fails on models that think before
 answering (4/11).}
@@ -46,15 +46,14 @@ questions (A10) drops BENCH to AUROC 0.48. Auditors that write their own questio
 
 \emph{Some honest behaviour is flagged.} A4 serves the correct model but with different sampling
 settings. OTE and FUSE flag it perfectly (AUROC 1.00) and IRIS-lite nearly so (0.94--0.96): a change
-in the answer pattern is mistaken for a different model. Whether a silent change of sampling settings should count as cheating is a policy choice; we
-score it as honest. GATEOPS flags honest load balancing (A11) perfectly too, which
+in the answer pattern is mistaken for a different model (scoring A4 as honest is a policy choice). GATEOPS flags honest load balancing (A11) perfectly too, which
 Section~\ref{sec:econ} discusses. The perfect scores against A6--A9 say little: these arms also serve
 the cheaper model, which our simulator makes very different from the genuine one. Against A6, which replays saved answers and
 so has no real response time, GATEOPS correctly says \emph{uninformative} instead of passing it.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{fig_evasion}
+\includegraphics[width=0.9\columnwidth]{fig_evasion}
 \caption{AUROC of each auditor (rows) against each arm (columns), v2, hand-written model pair.
 * marks honest arms; hatched cells mean the auditor could not run. Column A5: no auditor exceeds
 0.56 (0.61 on the fitted pair).}
@@ -69,12 +68,13 @@ batch: the 100 calibration sessions had simply produced an unluckily low thresho
 300 event. Separately, flagging equal scores turned ties into alarms, which doubled KBF's and
 BENCH's rate from 2\% to 4\%. Version v2 fixes both (Section~\ref{sec:design}). On 500 honest test
 sessions, every auditor's false-alarm rate is now at most 0.8\% [0.3, 2.0] (KBF), and GATEOPS drops
-to 0 of 500 (Wilson 95\% intervals~\cite{wilson1927}). A threshold set from 100 honest sessions can easily miss its target.
+to 0 of 500 (Wilson 95\% intervals~\cite{wilson1927}). So a threshold set from only 100 honest
+sessions can miss its target by a wide margin, which v1 did.
 
 \subsection{Real recorded responses}\label{sec:real}
 We recorded 742 real responses, including one full 240-request OTE session each from
 \texttt{gpt-oss-120b} and \texttt{gpt-oss-20b}, a large and a small model from the same family.
-Running OTE directly on these recordings gives the expected results. Comparing the first half of the
+On these recordings, comparing the first half of the
 120b's answers with the second half finds no difference ($p = 1.0$). The 20b differs from the 120b
 ($p = 4.5 \times 10^{-6}$), and a model from another family (Qwen) differs even more
 ($p = 3.8 \times 10^{-8}$). The two sizes have different ``favourite'' numbers: asked for a number
@@ -89,7 +89,8 @@ Response times cannot be recorded and replayed, so we ran five SHIM servers live
 an honest reference (REF), A0, A1, A3 cheating on 10\% of requests, and A9 (Table~\ref{tab:live}).
 Each server got 96 requests (8 questions $\times$ 12 repeats). The order was shuffled every round,
 so changes in Groq's load could not look like differences between arms, and times were measured on
-the client. The decision rules were fingerprinted before the first request. All 480 requests
+the client. The SHIM servers ran on the client's machine, so there was no network path between client
+and gateway, which a real customer has; real timing audits will be noisier. The decision rules were fingerprinted before the first request. All 480 requests
 succeeded in 25 minutes, at no cost.
 
 \begin{table}[t]
@@ -122,6 +123,5 @@ swap in the recordings: the number of repeats matters. A3, which swapped 14 of 9
 both tests. A9 added delay to reach a fixed target (0.9\,s on average, with the timing variation that
 GateScope reported for an honest baseline~\cite{lin2026gatescope}), but Groq's real model answers
 in 0.66\,s, so the delay made the cheap model \emph{slower} and more
-erratic than the real one, and it was caught. A cheater that shapes delay to live measurements of
-the genuine service was not tested. Honest load balancing (A11) could not be tested live, because
+erratic than the real one, and it was caught. A delay shaped to live measurements was not tested. Honest load balancing (A11) could not be tested live, because
 no second free provider offers \texttt{gpt-oss-120b}.

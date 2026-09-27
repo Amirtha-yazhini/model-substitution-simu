@@ -18,13 +18,13 @@ counts, and the cost at public prices. No auditor can read this log. Because it 
 we can measure exactly how often each auditor is right or wrong, which is impossible when auditing a
 real gateway.
 
-> TABLE arms caption: The twelve arms (cheating strategies). Bold arms have never been evaluated before, or (A5) only against one auditor [@iris2026]. A4 and A11 serve the correct model and test whether auditors raise false alarms.
+> TABLE arms caption: The twelve arms (cheating strategies). Bold arms have never been evaluated before, or (A5) only against one auditor [@iris2026]. A4 and A11 serve the correct model and test whether auditors raise false alarms; A2 is ambiguous.
 
 | Arm | What the gateway does | Cheating? |
 |---|---|---|
 | A0 | Honest | no |
 | A1 | Always serves the cheaper model | yes |
-| A2 | Same model name, different provider | yes |
+| A2 | Same model name, different provider | ? |
 | A3 | Cheaper model on a share $\epsilon$ of requests | yes |
 | A4 | Right model, changed sampling settings | no |
 | **A5** | Honest only on requests that look like tests | yes |
@@ -39,7 +39,10 @@ Three arms need more explanation. **A5** (hiding from tests) sends a request to 
 model when it *looks like a test*: an answer limit of at most 24 tokens, a prompt under 220
 characters, a prompt it has seen before, or a phrase such as "reply with only". It does not need
 to know any auditor's actual questions, only the shape that cheap test questions share.
-**A10** keeps a list of public benchmark questions and answers those honestly. **A11** is
+**A10** keeps a list of public benchmark questions and answers those honestly. **A2**
+sends every request to a second provider of the correct model, the same provider A11 uses for some
+requests. Whether that is cheating depends on whether the second provider runs a cheaper copy, which
+a customer cannot see, so we treat A2 as ambiguous and draw no conclusion from it. **A11** is
 not cheating: it spreads traffic across legitimate providers of the correct model, as commercial
 routers do by default [@openrouter_exacto]. We use it to count false alarms.
 
@@ -59,6 +62,7 @@ and raises a flag when the product passes $1/\alpha$. A classical result (Ville'
 keeps the false-alarm rate below $\alpha$ [@vovk2021evalues; @ville1939], but only if the auditors'
 evidence is independent. Ours is not, since all auditors read the same session, so we also report the
 *average* of the e-values, which stays valid under any dependence (Section [posthoc]).
+FUSE turns out to be a negative result: it inherits every weakness of the auditors it combines.
 
 > TABLE auditors caption: The six auditors: five rebuilt from published papers, one new.
 
@@ -80,7 +84,6 @@ $N = 300$, the chance that the true false-alarm rate still ends up above 1% is a
 $0.99^{300} = 4.9%$. All thresholds and decision rules went into one file, which we fingerprinted
 with SHA-256, committed and tagged before any test ran; every test script refuses to run if the file
 has changed. An auditor that cannot run, for example because an endpoint lacks a field it needs,
-reports *uninformative*, never *pass*. Our first version of these rules (v1, $N = 100$)
-flagged scores *equal* to the threshold. We report v1 as it was sealed and fix the rule in a
-second sealed version (v2), rather than editing v1. We designed v2 after seeing v1's results, so v2
-was evaluated only on fresh blocks of random seeds that no earlier run had used.
+reports *uninformative*, never *pass*. A first sealed version (v1, $N = 100$) also flagged
+ties; we report it as sealed and fixed it in a second seal (v2), designed after seeing v1's results and
+therefore evaluated only on fresh random seeds.
