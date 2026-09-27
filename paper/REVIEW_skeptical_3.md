@@ -118,7 +118,7 @@ and the sealed findings stated first and on their own.
 5. **No description of the simulator's parameters in the paper.** A reader cannot judge the
    simulator's realism (answer biases, 3× latency gap, accuracy 0.86 vs 0.54) without the artifact,
    and the artifact link is still a placeholder.
-6. **Citations.** Nine of the fourteen references are 2025–2026 arXiv preprints; that is the state of
+6. **Citations.** Seven of the thirteen cited references are 2025–2026 arXiv preprints; that is the state of
    the field, but the related work should say which are peer-reviewed (GateScope at IMC).
 7. **Figure 4 and the fitted pair.** The evasion heatmap shows the hand-written pair only; its
    caption's "no auditor exceeds 0.56" differs from the text's "0.56 / 0.61".
