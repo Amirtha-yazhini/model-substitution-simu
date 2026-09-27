@@ -20,9 +20,10 @@ At least eight such auditors have been published since April 2025
 Each was tested on its own data, against its own simulated cheater, and usually with thresholds
 chosen on the same data it reports. A replication study that fixed its thresholds in
 advance~\cite{holdout2026} showed why this matters: a method that was perfect on its development
-data caught only half of the substitutions in fresh data, and could not score half of the fresh
-cases at all. The auditors have never been compared on the same data against the same cheater, and
-none has been tested against a gateway that knows it might be audited.
+data recognised only half of the same-family model pairs in fresh data, and could not score half of
+the fresh cases at all. The auditors have never been compared on the same data against the same
+cheater. Only one has been tested against a gateway that tries to spot its test requests, and only
+against its own probes~\cite{iris2026}.
 
 \textbf{Threat model.} The customer sends requests over HTTPS to a gateway that advertises model
 $M$. For each request the gateway decides where it goes: to $M$, to a cheaper substitute $M'$, to
@@ -39,8 +40,9 @@ spreading traffic across several legitimate providers of $M$, is allowed and sho
 \textbf{Contributions.}
 \begin{itemize}
 \item \emph{A shared test gateway.} SHIM, a drop-in OpenAI-compatible gateway that can cheat in
-  twelve ways. Four of them (hiding from tests, restyling cheap answers, recognising benchmark
-  questions, and honest load balancing) have never been evaluated before. A hidden log records which
+  twelve ways. Three of them (restyling cheap answers, recognising benchmark questions, and
+  honest load balancing) have never been evaluated before, and a fourth (hiding from tests) only
+  against one auditor's own probes. A hidden log records which
   model really answered each request.
 \item \emph{A fair comparison of six auditors.} Five published methods, rebuilt from their papers,
   and one new method that combines them. All thresholds were fixed and fingerprinted before testing,

@@ -187,8 +187,8 @@ Calibration-free rules flag at p < 0.01; bold = flagged.
   (p = 0.10), although 30 repeats caught it at p = 4.5e-6 in §3.4. Depth per cell matters.
 - **Dilution at 10% passed everything.** With 14 of 96 requests swapped, A3 is clean on latency
   (p = 0.90) and text (p = 0.84), consistent with eps\* = 0.10 from §4.
-- **Latency shaping swapped one tell for another.** A9 pads responses toward a 0.9 s mean, the baseline
-  GateScope reported. Groq answers in about 0.65 s, so the padding made the substitute slower and
+- **Latency shaping swapped one tell for another.** A9 pads responses toward a fixed 0.9 s mean
+  (with the 0.63 timing variation GateScope reported for an honest baseline). Groq answers in about 0.65 s, so the padding made the substitute slower and
   noisier than the real model (median 0.87 s, CV 0.99 vs 0.57). It was still caught (KS 0.43,
   p = 3e-8). An evasion tuned to a published baseline instead of the live one incriminates itself.
 - **Benign routing (A11) is blocked** on this fleet: no second free provider serves gpt-oss-120b

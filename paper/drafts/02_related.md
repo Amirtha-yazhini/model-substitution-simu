@@ -6,35 +6,38 @@
 reference. Bruckner's one-token test [@bruckner2026] asks short closed questions ("pick a
 number from 1 to 100"), caps answers at 16 tokens, and measures how different the two answer
 distributions are (Jensen–Shannon divergence). It covered 165 models for \$34, with an equal error
-rate of 7.3%, or 10.6% in the smaller 8-question version we use. KBF [@fang2026kbf] asks for
+rate of 7.3%, or 10.6% with 8 of its 40 probe cells, the version we use. KBF [@fang2026kbf] asks for
 numeric facts that sit at the edge of what a model knows, where large and small models of the same
-family disagree; it reports catching 5–10% dilution with no false alarms on 16 endpoints.
-IRIS [@iris2026] trains a classifier on 179 surface features of the text and plans its queries
-within a budget; it also studies dilution. *Metadata-based* auditors look at how the service
+family disagree; on 16 endpoints it flags all 155 substitutions it tested without rejecting any
+honest control, and catches dilution of 5–10% when the two models differ clearly.
+IRIS [@iris2026] asks for random numbers or strings, trains a random forest on 179 surface
+features of the answers, and sizes its own query budget; it also estimates the dilution rate. *Metadata-based* auditors look at how the service
 behaves. GateScope [@lin2026gatescope] audited ten commercial gateways using text, 25-turn memory,
 billing mismatches and variation in response time. *Benchmark-based*
 auditors [@cai2025] compare accuracy on standard tests (MMLU, GPQA, GSM8K); the same paper
 concludes that software-only auditing is unreliable and recommends secure hardware.
 *Probability-based* auditors need deeper access: RUT [@zhu2025rut] checks the emitted tokens
-against a reference model that the auditor runs locally, and DiFR [@difr2025] needs the raw
-model scores (logits). Other work identifies what a model is [@stemma2026; @archinfer2026], rather
+against a reference model that the auditor runs locally, and DiFR [@difr2025] needs the
+provider to share its random seed so that outputs can be checked against a trusted reference. Other work identifies what a model is [@stemma2026; @archinfer2026], rather
 than whether it was swapped.
 
 **Replication.** A study that fixed its thresholds before testing [@holdout2026] matched
-models by their reported prompt token counts. It was perfect on development data, but on fresh data
-it caught only half of the substitutions, and 6 of 12 fresh cases could not be scored because of
-rate limits and missing fields. We follow its practice of fixing thresholds in advance, and apply it
+model families by their reported prompt token counts. It was perfect on development data, but on
+fresh data it recognised only half of the same-family pairs, and 6 of 12 fresh pairs could not be
+scored because of rate limits and missing usage data. We follow its practice of fixing thresholds in advance, and apply it
 to six methods instead of one.
 
-**What is missing.** Every auditor was tested against a gateway that cheats the same way no
-matter who is asking. None was tested against a gateway that recognises test traffic, and no two
-were run on the same data. IRIS is the closest to our work, since it also studies dilution and
-audit budgets. We add three things: a cheater that adapts, one shared set of recorded responses that
-every auditor sees byte for byte, and an honest load-balancing case that no earlier evaluation
-includes. Commercial routers already spread traffic across providers by
+**What is missing.** Most auditors were tested only against a gateway that cheats the same way
+no matter who is asking, and no two were run on the same data. Two papers discuss evasion. RUT is
+designed to avoid recognisable query patterns, but has not been tested against an adversary that
+knows the method [@zhu2025rut]. IRIS, the closest to our work, tests gateways that spot its
+own probes by keyword or by answer shape, and names a fully adaptive gateway as the key open
+threat [@iris2026]. We add three things: one adaptive cheater run against
+every auditor, one shared set of recorded responses that every auditor sees byte for byte, and
+honest load balancing scored as a false-alarm test, which no earlier evaluation does. Commercial routers already spread traffic across providers by
 default [@openrouter_exacto], so an auditor that flags mixed traffic will flag them too.
 
-> REFERENCES (Claude builds refs.bib from these and checks each exists):
+> REFERENCES (all arXiv entries verified against arxiv.org on 2026-09-27; see refs.bib):
 > - cai2025: Cai, Shi, Zhao, Song. Are You Getting What You Pay For? Auditing Model Substitution in LLM APIs. arXiv:2504.04715
 > - zhu2025rut: Zhu et al. Auditing Black-Box LLM APIs with a Rank-Based Uniformity Test. arXiv:2506.06975
 > - lin2026gatescope: Lin et al. Behavioral Consistency and Transparency Analysis on LLM API Gateways (GateScope). IMC'26. arXiv:2604.21083

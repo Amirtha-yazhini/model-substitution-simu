@@ -91,8 +91,9 @@ The honest A0 passes both tests. The real speed difference between the two model
 3$\times$ our hand-written simulator assumed, but timing still catches full substitution (A1). The
 text test misses it with 12 repeats per question ($p = 0.10$), although 30 repeats caught the same
 swap in the recordings: the number of repeats matters. A3, which swapped 14 of 96 requests, passes
-both tests. A9 added delay to reach the 0.9 s average that GateScope reported [@lin2026gatescope],
-but Groq's real model answers in 0.66 s, so the delay made the cheap model *slower* and more
-erratic than the real one, and it was caught. Hiding by copying a published number instead of the
-real service gives the cheater away. Honest load balancing (A11) could not be tested live, because
+both tests. A9 added delay to reach a fixed target (0.9 s on average, with the timing variation that
+GateScope reported for an honest baseline [@lin2026gatescope]), but Groq's real model answers
+in 0.66 s, so the delay made the cheap model *slower* and more
+erratic than the real one, and it was caught. Hiding by copying fixed numbers instead of the real
+service gives the cheater away. Honest load balancing (A11) could not be tested live, because
 no second free provider offers `gpt-oss-120b`.

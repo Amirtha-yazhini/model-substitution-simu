@@ -19,7 +19,7 @@ counts, and the cost at public prices. No auditor can read this log. Because it 
 we can measure exactly how often each auditor is right or wrong, which is impossible when auditing a
 real gateway.
 
-> TABLE arms caption: The twelve arms (cheating strategies). Bold arms have never been evaluated before. A4 and A11 serve the correct model and test whether auditors raise false alarms.
+> TABLE arms caption: The twelve arms (cheating strategies). Bold arms have never been evaluated before, or (A5) only against one auditor [@iris2026]. A4 and A11 serve the correct model and test whether auditors raise false alarms.
 
 | Arm | What the gateway does | Cheating? |
 |---|---|---|
