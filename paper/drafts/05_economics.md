@@ -35,17 +35,15 @@ set by GATEOPS. We therefore report $\epsilon^*$ as 0.10–0.15 for audits that 
 **Cheating or load balancing?** A3 at $\epsilon = 0.10$ sends 10% of traffic to a cheaper
 model. A11 spreads traffic across honest providers of the correct model. (Fig. F6) compares them over 200 sessions each.
 
-> FIGURE F6 (fig_confound): Share of sessions flagged for A3 (cheating on 10% of requests) and A11 (honest load balancing), v2 hand-written pair, 200 sessions each. Top row: AUROC for telling them apart. The timing auditor flags honest load balancing far more often than cheating.
+> FIGURE F6 (fig_confound): Share of sessions flagged for A3 (cheating on 10% of requests) and A11 (honest load balancing), v2 hand-written pair, 200 sessions each. Top row: AUROC for telling them apart.
 
 GATEOPS finds honest load balancing *more* suspicious than cheating (AUROC 0.03; 0.00 on the
 fitted pair, where it flags 100% of load-balancing and 5% of cheating sessions), and
 FUSE inherits the problem: on the fitted pair it flags half of the honest load-balancing sessions
 and none of the cheating ones. Section [posthoc] shows how much of this depends on the second provider's timing,
 which we had to invent. Timing and metadata show whether traffic is *mixed*, not
-whether the model is *wrong*, and load balancing mixes traffic by design. The text-based
-auditors can tell the two apart here only because our simulated second provider returns almost the
-same text. A real second provider, running different software or a compressed copy, would change the
-text too, and the difference would shrink.
+whether the model is *wrong*, and load balancing mixes traffic by design. Text-based
+auditors separate them here only because our simulated second provider returns the same text.
 
 So "model substitution" mixes three questions that need different evidence:
 - *Wrong model:* the model is cheaper on all requests (A1, A7) or some of them (A3). Text

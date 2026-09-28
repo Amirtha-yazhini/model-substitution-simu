@@ -19,6 +19,7 @@
 \usepackage{cite}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{array}
 \usepackage{multirow}
 \usepackage{xcolor}
 \usepackage{url}
@@ -31,7 +32,15 @@
 \newcommand{\placeholder}[1]{\textcolor{red}{[#1]}}
 
 % Keep PDF metadata anonymous.
-\hypersetup{pdfauthor={}, pdftitle={}, pdfsubject={}, pdfkeywords={}}
+\hypersetup{pdfauthor={}, pdftitle={}, pdfsubject={}, pdfkeywords={},
+  pdfcreator={}, pdfproducer={}}
+% Double-blind: strip pdfTeX's own metadata (engine banner, embedded-figure file names and
+% info dictionaries) and the timestamps, so the PDF carries nothing but the paper.
+\ifPDFTeX
+\pdfsuppressptexinfo=-1
+\pdfinfoomitdate=1
+\pdftrailerid{}
+\fi
 
 \begin{document}
 

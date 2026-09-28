@@ -110,3 +110,18 @@ rather than scaling them down.
 | M1 | Density | A small summary table for Section 6, takeaway-first sentences | Medium | No |
 | minor 1–5 | Generality wording, informative arms, title, anchoring references, FUSE | Text edits | Low | No |
 | minor 6 | Artifact link | Create the anonymous.4open.science mirror at submission | Low | No |
+
+---
+
+## Outcome: the final pass (2026-09-28)
+
+| # | Outcome |
+|---|---|
+| M1 | **Fixed.** Section 6 is now a six-row summary table (question, result, caveat) plus two short paragraphs; the prose repeats no numbers from the table. |
+| M2 | **Fixed.** The introduction says plainly why this is a network-security and measurement problem (untrusted intermediary on the path, evidence limited to what crosses it, HTTP timing side channel), citing the IMC gateway study. |
+| M3 | **Fixed.** New paragraph before the conclusion, "What an auditor should do": text-based tests not timing or fingerprints; pool sessions with concurrent calibration; tests that look like ordinary traffic from ordinary accounts; ask for routing disclosure. |
+| M4 | **Fixed.** Figures regenerated at exactly the column width (3.45 in) with 7.5–8 pt Times-metric fonts (Liberation Serif where Times is absent; the previous build fell back to the much wider DejaVu Serif), placed unscaled. Break-even legend moved below the plot in two columns; tick labels thinned; A2 marked "?" in the heatmap. |
+| minor 2 | Design section names the informative arms (A1, A3–A5, A10, A11). |
+| minor 5 | The conclusion's closing sentence was shortened; FUSE stays in the figures (they come from the sealed script). |
+| minor 1, 3, 4 | Not changed: generality is stated in the limitations; the title and the choice of anchoring references are the authors' call. |
+| minor 6 | PDF metadata cleaned; anonymised repository link prepared (needs the author's GitHub login, steps in `PLAN.md`). |

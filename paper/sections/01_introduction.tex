@@ -14,7 +14,10 @@ The customer pays for ``model X'', but the only record of what ran is the gatewa
 provider could prove what ran using secure hardware~\cite{cai2025}, but gateways do not offer this
 today, and the customer cannot look inside the gateway. What the customer can do is test the
 answers. A black-box \emph{auditor} sends test requests (\emph{probes}) and decides, from the text,
-timing and metadata that come back, whether the advertised model answered.
+timing and metadata that come back, whether the advertised model answered. This makes the problem one
+of network security and measurement: the gateway is an untrusted intermediary on the path between
+customer and provider, the customer's evidence is only what crosses that path, and response time over
+HTTP is a side channel, much as in measurements of commercial gateways~\cite{lin2026gatescope}.
 
 At least six black-box auditors have been published since April 2025
 \cite{cai2025,zhu2025rut,lin2026gatescope,fang2026kbf,bruckner2026,iris2026}, alongside a method that

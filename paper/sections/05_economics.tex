@@ -10,7 +10,7 @@ sessions to catch the cheating 80\% of the time, using measured token counts and
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.9\columnwidth]{fig_break_even}
+\includegraphics[width=\columnwidth]{fig_break_even}
 \caption{What the cheater saves per \$1,000 per month (top line) vs.\ what an audit costs to catch
 it 80\% of the time, by share of requests swapped (v2, hand-written pair). Audits judge each
 session alone; hollow markers would cause too many false alarms. In the shaded region no such audit
@@ -44,10 +44,9 @@ model. A11 spreads traffic across honest providers of the correct model. Fig.~\r
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.9\columnwidth]{fig_confound}
+\includegraphics[width=\columnwidth]{fig_confound}
 \caption{Share of sessions flagged for A3 (cheating on 10\% of requests) and A11 (honest load
-balancing), v2 hand-written pair, 200 sessions each. Top row: AUROC for telling them apart. The
-timing auditor flags honest load balancing far more often than cheating.}
+balancing), v2 hand-written pair, 200 sessions each. Top row: AUROC for telling them apart.}
 \label{fig:F6}
 \end{figure}
 
@@ -56,10 +55,8 @@ fitted pair, where it flags 100\% of load-balancing and 5\% of cheating sessions
 FUSE inherits the problem: on the fitted pair it flags half of the honest load-balancing sessions
 and none of the cheating ones. Section~\ref{sec:posthoc} shows how much of this depends on the second provider's timing,
 which we had to invent. Timing and metadata show whether traffic is \emph{mixed}, not
-whether the model is \emph{wrong}, and load balancing mixes traffic by design. The text-based
-auditors can tell the two apart here only because our simulated second provider returns almost the
-same text. A real second provider, running different software or a compressed copy, would change the
-text too, and the difference would shrink.
+whether the model is \emph{wrong}, and load balancing mixes traffic by design. Text-based
+auditors separate them here only because our simulated second provider returns the same text.
 
 So ``model substitution'' mixes three questions that need different evidence:
 \begin{itemize}

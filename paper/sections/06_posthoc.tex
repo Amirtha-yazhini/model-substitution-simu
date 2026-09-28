@@ -1,42 +1,39 @@
 % Converted from drafts/06_posthoc.md. Budget: 0.75 pages.
 \section{Checks Added After Sealing}\label{sec:posthoc}
 
-These checks were designed after the sealed results were known, to test how far those results
-hold. None changes a sealed number; all are exploratory.
+These checks were designed after the sealed results were known, to test how far those results hold
+(Table~\ref{tab:posthoc}). None changes a sealed number; all are exploratory.
 
-\textbf{What does hiding cost the cheater?} A5 gives up its saving on every request that looks like
-a test. Replaying 172,418 real user requests (one of fourteen shards) from the WildChat
-dataset through A5's classifier, only 3.3\% of requests (0.6\% of token cost) look like tests, so on
-chat traffic A5 keeps over 99\% of the saving of always cheating. API traffic can differ: in Azure's
-production code-completion trace~\cite{splitwise2024}, 76\% of requests generate at most 24 tokens, so
-A5 could serve many honestly if they also repeat, which the trace does not record.
+\begin{table}[t]
+\centering
+\caption{Checks added after sealing (exploratory).}
+\label{tab:posthoc}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.23\columnwidth}>{\raggedright\arraybackslash}p{0.38\columnwidth}>{\raggedright\arraybackslash}p{0.32\columnwidth}@{}}
+\toprule
+Question & Result & Caveat \\
+\midrule
+Cost of hiding (A5) & 3.3\% of 172,418 WildChat requests (0.6\% of cost) look like tests & API traffic may differ: 76\% of Azure code-completion requests generate $\le$24 tokens~\cite{splitwise2024} \\
+Disguised tests & OTE catches A5 in every session, at 4.9$\times$ the cost & True by construction in our simulator \\
+Sensitivity of $\epsilon^*$ & 0.07--0.15 for power 50--90\% and false-alarm budget 1--10\% & 0.25 without IRIS-lite at 1\% \\
+Pooled sessions & KBF catches $\epsilon = 0.05$ with 256--512 sessions (\$0.34--\$0.68 + calibration) & Flags 9--11\% of honest routing; never reaches 0.03 \\
+Honest timing drift & Yes, within 25 minutes (KS 0.20, $p = 0.046$) & Pooled timing needs concurrent calibration \\
+Confound vs.\ invented timing & At the measured 18\% gap GATEOPS still flags 74--100\% of A11 & At no gap it flags none \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\textbf{Can disguised tests beat it?} When OTE asks its eight questions inside 30 long, everyday
-framings we wrote, never repeating a request, A5 no longer spots them, and OTE catches it in every session (AUROC
-1.00, no honest session flagged), at 4.9$\times$ the cost per session. This holds by construction in
-our simulator, which picks an answer from the question alone and replies with a bare token; a real
-model answers in prose, and the surrounding request may shift its answers. IRIS finds real models
-stay identifiable under disguise, but only partly across framings~\cite{iris2026}. Disguise does not
-help against a gateway that targets auditing accounts.
+\textbf{Hiding and disguise.} We replayed one of WildChat's fourteen shards through A5's classifier:
+on chat traffic A5 keeps over 99\% of the saving of always cheating. Asking OTE's questions inside 30
+everyday framings we wrote, never repeated, defeats A5 in simulation, but only because our simulator
+answers from the question alone; real models answer in prose and may shift with context, and IRIS
+finds they stay only partly identifiable across framings~\cite{iris2026}. Disguise does not help
+against a gateway that targets auditing accounts.
 
-\textbf{Is the 10--15\% floor a property of auditing?} A power target of 50--90\% and a
-false-alarm budget of 1--10\% keep $\epsilon^*$ at 0.07--0.15 (0.25 without IRIS-lite at 1\%). It
-falls further only if sessions are pooled: one one-sided Welch $t$-test (the
-simplest test that allows for noise in both samples) of $k$ sessions' mean score against the 300
-sealed honest calibration sessions keeps the false-alarm rate near 5\% on random splits of our
-honest sessions; the calibration set limits how small a shift it can resolve. Pooled, GATEOPS catches $\epsilon = 0.02$--$0.03$ for under \$0.40 and BENCH
-0.03, but pooled GATEOPS flags 100\% of honest load-balancing audits and pooled BENCH catches none
-of the benchmark-aware A10. IRIS-lite reaches 0.03--0.07 but flags every honest change of sampling
-settings (A4) and cannot separate the real models (Section~\ref{sec:real}). KBF alone stays quiet on
-A4 and catches A10. Because the sealed run has only 200 sessions per cheating rate, we simulated 1,000
-more of each for KBF: it catches $\epsilon = 0.07$ with 64 sessions and 0.05 with 256--512 (\$0.34--\$0.68,
-plus \$0.40--\$1.32 for 300--1,000 honest calibration sessions), but never 0.03, even with 1,000; at
-that depth it also flags 9--11\% of honest load-balancing audits. A5 still beats it. Pooled timing also needs
-its calibration taken at the same time as the audit: in the live run, honest latency drifted between
-the first and second halves of 25 minutes (KS 0.20, $p = 0.046$).
-
-\textbf{Does the confound depend on the invented timing?} Yes. The honest second provider behind A11
-could not be measured, so its timing is hand-written. Set 18\% faster than the genuine model (the
-measured gap between the two real models), GATEOPS still flags 74--100\% of load-balancing sessions;
-set identical, it flags none. FUSE's dependence-safe average behaves the same (44\% of
-load-balancing sessions flagged on the fitted pair, no cheating session at $\epsilon = 0.10$).
+\textbf{Pooling.} One one-sided Welch $t$-test (the simplest test that allows for noise in both
+samples) of $k$ sessions' mean score against 300 honest calibration sessions keeps false alarms near
+5\%. Pooled, GATEOPS catches $\epsilon = 0.02$--$0.03$ and BENCH 0.03, but pooled GATEOPS flags every
+honest load-balancing audit and pooled BENCH misses every benchmark-aware A10; IRIS-lite flags every
+honest sampling change (A4) and cannot separate the real models. KBF alone passes both checks, so we
+simulated 1,000 more sessions per case for it (the sealed run has 200); A5 still beats it.

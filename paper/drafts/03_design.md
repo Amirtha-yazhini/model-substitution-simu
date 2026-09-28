@@ -42,7 +42,9 @@ to know any auditor's actual questions, only the shape that cheap test questions
 **A10** keeps a list of public benchmark questions and answers those honestly. **A2**
 sends every request to a second provider of the correct model, the same provider A11 uses for some
 requests. Whether that is cheating depends on whether the second provider runs a cheaper copy, which
-a customer cannot see, so we treat A2 as ambiguous and draw no conclusion from it. **A11** is
+a customer cannot see, so we treat A2 as ambiguous and draw no conclusion from it. A6–A9 also serve the
+cheaper model and every auditor catches them in simulation, so the informative arms are A1, A3–A5,
+A10 and A11. **A11** is
 not cheating: it spreads traffic across legitimate providers of the correct model, as commercial
 routers do by default [@openrouter_exacto]. We use it to count false alarms.
 

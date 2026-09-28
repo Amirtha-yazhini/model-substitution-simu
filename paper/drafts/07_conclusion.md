@@ -17,15 +17,19 @@ live test used 96 requests per arm; honest load balancing could not be tested li
 (v) *Simulated cheaters.* A5 is our own design and works per request; a gateway that targets
 auditing accounts would be stronger. The checks in Section [posthoc] are exploratory.
 
+**What an auditor should do.** On this evidence, a customer who suspects substitution should
+(1) rely on text-based tests such as KBF, not on timing or `system_fingerprint`; (2) pool many
+sessions into one test, with honest calibration collected at the same time; (3) send tests that look
+like ordinary traffic, from accounts that also carry real work; and (4) ask the gateway to disclose
+its routing, since honest routing and cheating look alike to timing.
+
 **Conclusion.** Auditing an LLM gateway is cheap, but not robust as published. A gateway that
 spots test-shaped requests beats every auditor and, on chat traffic, gives up almost nothing. Judged
 one session at a time, no auditor catches cheating below 10–15%. Pooling hundreds of sessions
 reaches 5% with the most specific auditor, at the price of flagging about one honest load-balancing
 audit in ten; lower rates need auditors that flag honest routing or lose to benchmark-aware
-cheating. Timing cannot tell cheating from honest load balancing.
-Trustworthy
-billing for LLM APIs will need test requests that look like normal traffic from ordinary accounts,
-gateways that disclose their routing, and metering the customer can verify.
+cheating. Timing cannot tell cheating from honest load balancing, and a wrong bill needs metering
+the customer can verify.
 
 **Ethics.** We report only aggregates from WildChat and the Azure trace, stayed within free-tier
 limits, and accuse no provider.
