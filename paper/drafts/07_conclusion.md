@@ -35,5 +35,5 @@ the customer can verify.
 limits, and accuse no provider.
 
 **Artifact.** The gateway, auditors, sealed rules, recorded responses and every figure are
-available at an anonymised repository: [ANONYMISED LINK]. Everything except
+available at an anonymised repository: https://anonymous.4open.science/r/model-substitution-simu-0F5B. Everything except
 the live test can be rerun without an API key.

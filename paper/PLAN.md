@@ -136,13 +136,14 @@ Easiest first. After each one, Claude converts, compiles and reports pages remai
 - [x] Cut to 6 pages (6/6, figures regenerated at column width with 7.5–8 pt fonts, all fonts embedded).
 - [x] Consistency pass: every number in the PDF checked against `results/` (paper numbers and the
       post-hoc tables in `results/v2/tables/`).
-- [ ] Anonymisation:
+- [x] Anonymisation:
   - [x] No names or emails in any tracked file; no API keys; no personal paths. Names appear only in
         git commit history, which Anonymous GitHub does not mirror.
   - [x] PDF metadata stripped (`main.tex`: empty hyperref fields, `\pdfsuppressptexinfo=-1`,
         `\pdfinfoomitdate=1`, `\pdftrailerid{}`); `pdfinfo` shows no author, creator, producer or dates.
-  - [ ] **You:** create the anonymised link (steps below) and send it; Claude replaces the
-        placeholder in `sections/07_conclusion.tex`.
+  - [x] Anonymised link created and in the paper:
+        <https://anonymous.4open.science/r/model-substitution-simu-0F5B>. It mirrors the branch it was
+        created from; make sure that branch has the final code before submitting.
   - [x] No self-citations.
 - [x] Read-through as a reviewer: five mock reviews (`REVIEW_skeptical*.md`), each with outcomes.
 
