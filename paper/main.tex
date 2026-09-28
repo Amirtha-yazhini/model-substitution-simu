@@ -19,6 +19,7 @@
 \usepackage{cite}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{array}
 \usepackage{multirow}
 \usepackage{xcolor}
 \usepackage{url}
@@ -31,11 +32,19 @@
 \newcommand{\placeholder}[1]{\textcolor{red}{[#1]}}
 
 % Keep PDF metadata anonymous.
-\hypersetup{pdfauthor={}, pdftitle={}, pdfsubject={}, pdfkeywords={}}
+\hypersetup{pdfauthor={}, pdftitle={}, pdfsubject={}, pdfkeywords={},
+  pdfcreator={}, pdfproducer={}}
+% Double-blind: strip pdfTeX's own metadata (engine banner, embedded-figure file names and
+% info dictionaries) and the timestamps, so the PDF carries nothing but the paper.
+\ifPDFTeX
+\pdfsuppressptexinfo=-1
+\pdfinfoomitdate=1
+\pdftrailerid{}
+\fi
 
 \begin{document}
 
-\title{\placeholder{Working title}}
+\title{Who's Actually Answering? Stress-Testing\\LLM Model-Substitution Auditors\\Against an Adversarial Gateway}
 
 \ifanonymous
 \author{\IEEEauthorblockN{Anonymous Author(s)}
@@ -53,10 +62,11 @@
 \input{sections/03_design}
 \input{sections/04_results}
 \input{sections/05_economics}
-\input{sections/06_conclusion}
+\input{sections/06_posthoc}
+\input{sections/07_conclusion}
 
 % Enabled once refs.bib has its first entry (an empty bibliography does not compile).
-%\bibliographystyle{IEEEtran}
-%\bibliography{refs}
+\bibliographystyle{IEEEtran}
+\bibliography{refs}
 
 \end{document}

@@ -326,16 +326,20 @@ def setup_mpl():
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     plt.rcParams.update({
-        "font.family": "serif", "font.serif": ["Times New Roman", "Times", "DejaVu Serif"],
-        "mathtext.fontset": "stix", "font.size": 7, "axes.labelsize": 7, "axes.titlesize": 7,
-        "legend.fontsize": 6, "xtick.labelsize": 6.5, "ytick.labelsize": 6.5,
+        "font.family": "serif",
+        # Liberation Serif has Times New Roman's metrics; used where Times is absent.
+        "font.serif": ["Times New Roman", "Times", "Liberation Serif", "DejaVu Serif"],
+        "mathtext.fontset": "stix", "font.size": 8, "axes.labelsize": 8, "axes.titlesize": 8,
+        "legend.fontsize": 7.5, "xtick.labelsize": 7.5, "ytick.labelsize": 7.5,
         "pdf.fonttype": 42, "ps.fonttype": 42,           # embedded TrueType (PDF eXpress)
         "axes.linewidth": 0.5, "axes.edgecolor": "0.3", "axes.spines.top": False,
         "axes.spines.right": False, "axes.grid": True, "axes.axisbelow": True, "grid.color": "0.88",
         "grid.linewidth": 0.4, "lines.linewidth": 0.9, "lines.markersize": 3.2,
         "xtick.major.width": 0.5, "ytick.major.width": 0.5, "xtick.major.size": 2,
-        "ytick.major.size": 2, "legend.frameon": False, "savefig.bbox": "tight",
-        "savefig.pad_inches": 0.02, "figure.dpi": 150,
+        "ytick.major.size": 2, "legend.frameon": False, "figure.dpi": 150,
+        # Drawn at the final column width and saved at exactly that size, so LaTeX
+        # places them unscaled and the fonts print at their nominal 7.5-8 pt.
+        "figure.constrained_layout.use": True, "savefig.bbox": "standard",
     })
     return plt
 
@@ -370,7 +374,7 @@ def fig_power(plt, ev, eco):
             if b["lo"] is not None:
                 ax.axvspan(b["lo"], b["hi"] if b["hi"] is not None else eps_grid[-1],
                            color="0.9", lw=0, zorder=0)
-            ax.text(es * 0.96, 0.93, r"$\varepsilon^*$" + f" = {es:g}", fontsize=6.5, va="top",
+            ax.text(es * 0.96, 0.93, r"$\varepsilon^*$" + f" = {es:g}", fontsize=7.5, va="top",
                     ha="right")
         ax.set_xscale("log")
         ax.set_ylim(-0.02, 1.02)
@@ -391,9 +395,9 @@ def fig_break_even(plt, ev, eco, lad="mock"):
     E = eco[lad]
     A = ev.p["analysis"]
     eps_grid = ev.p["evaluation"]["eps_sweep"]["eps"]
-    fig, ax = plt.subplots(figsize=(W, 2.2))
+    fig, ax = plt.subplots(figsize=(W, 2.55))
     ax.plot(eps_grid, [E["save"][e] for e in eps_grid], color="0.0", lw=1.4,
-            label="adversary saving / month")
+            label="cheater's saving / month")
     for n in AUD:
         st = STYLE[n]
         xa, ya, xb, yb = [], [], [], []
@@ -415,15 +419,16 @@ def fig_break_even(plt, ev, eco, lad="mock"):
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xticks(eps_grid)
-    ax.set_xticklabels([f"{e:g}" for e in eps_grid])
+    shown = {0.02, 0.05, 0.1, 0.2, 0.5}
+    ax.set_xticklabels([f"{e:g}" if e in shown else "" for e in eps_grid])
     ax.minorticks_off()
     ax.set_xlim(eps_grid[0] * 0.9, eps_grid[-1] * 1.1)
     ax.set_xlabel(r"dilution rate $\varepsilon$")
     ax.set_ylabel("USD (log)")
     ax.scatter([], [], marker="o", facecolors="none", edgecolors="0.4", lw=0.5, s=9,
-               label="hollow: exceeds 5% family FPR")
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.22), ncol=3, handlelength=2.2,
-              columnspacing=0.9)
+               label="hollow: too many false alarms")
+    fig.legend(loc="outside lower center", ncol=2, handlelength=1.8, columnspacing=1.2,
+               fontsize=7)
     save(fig, "fig_break_even", plt)
 
 
@@ -433,14 +438,14 @@ def fig_coverage(plt, rows):
     y = np.arange(len(rows))
     ax.barh(y, [k / n for _, k, n in rows], height=0.6, color="0.45")
     for yi, (_, k, n) in zip(y, rows):
-        ax.text(k / n + 0.015, yi, f"{k}/{n}", va="center", fontsize=6.5)
+        ax.text(k / n + 0.015, yi, f"{k}/{n}", va="center", fontsize=7.5)
     ax.set_yticks(y)
     ax.set_yticklabels([r[0] for r in rows])
     ax.set_xlim(0, 1.15)
     ax.set_xticks([0, 0.5, 1.0])
     ax.set_xticklabels(["0%", "50%", "100%"])
     ax.grid(axis="y", visible=False)
-    ax.set_xlabel("free-tier endpoints where the auditor can run")
+    ax.set_xlabel("endpoints where the auditor can run")
     save(fig, "fig_coverage", plt)
 
 
@@ -469,11 +474,12 @@ def fig_evasion(plt, ev, lad="mock"):
             ax.add_patch(plt.Rectangle((j - .47, i - .47), .94, .94, facecolor=str(1 - 0.8 * t),
                                        edgecolor="none"))
             ax.text(j, i, f"{v:.2f}".lstrip("0") if round(v, 2) < 1 else "1", ha="center", va="center",
-                    fontsize=5.3, color="white" if t > 0.55 else "black")
+                    fontsize=7, color="white" if t > 0.55 else "black")
     ax.set_xlim(-.5, len(arms) - .5)
     ax.set_ylim(len(names) - .5, -.5)
     ax.set_xticks(range(len(arms)))
-    ax.set_xticklabels([a + ("*" if not IS_SUB[a] else "") for a in arms])
+    # * honest arm; ? ambiguous ground truth (A2 uses the same honest provider as A11).
+    ax.set_xticklabels([a + ("*" if not IS_SUB[a] else "?" if a == "A2" else "") for a in arms])
     ax.set_yticks(range(len(names)))
     ax.set_yticklabels(names)
     ax.tick_params(length=0)
@@ -500,14 +506,14 @@ def fig_fpr(plt, ev, v1):
         ax.errorbar(p, y, xerr=err, fmt=mk, color=col, mfc=mfc, mec=col, ms=3.2,
                     elinewidth=0.5, capsize=0, label=label)
     ax.axvline(ev.alpha, color="0.0", lw=0.6, ls="--")
-    ax.text(ev.alpha, -0.85, r" $\alpha$ = 1%", fontsize=6.5, va="bottom")
+    ax.text(ev.alpha, -0.85, r" $\alpha$ = 1%", fontsize=7.5, va="bottom")
     ax.set_yticks(range(len(names)))
     ax.set_yticklabels(names)
     ax.set_ylim(len(names) - 0.5, -0.9)
     ax.grid(axis="y", visible=False)
     ax.xaxis.set_major_formatter(plt.matplotlib.ticker.PercentFormatter(1.0, decimals=0))
     ax.set_xlabel("realised false-positive rate (Wilson 95%)")
-    ax.legend(loc="lower right", fontsize=5.8, handletextpad=0.3)
+    ax.legend(loc="lower right", fontsize=7, handletextpad=0.3)
     save(fig, "fig_fpr", plt)
 
 
@@ -524,15 +530,15 @@ def fig_confound(plt, ev, lad="mock"):
                     elinewidth=0.5, capsize=0, label=label)
     for i, n in enumerate(AUD):
         v = auroc(Evidence.scores(a3, n), Evidence.scores(a11, n))
-        ax.text(i, 1.08, f"{v:.2f}", ha="center", fontsize=6)
-    ax.text(-0.7, 1.08, "AUROC", ha="right", fontsize=6)
+        ax.text(i, 1.08, f"{v:.2f}", ha="center", fontsize=7.5)
+    ax.text(-0.7, 1.08, "AUROC", ha="right", fontsize=7.5)
     ax.set_xticks(x)
     ax.set_xticklabels(AUD)
     ax.set_ylim(-0.03, 1.15)
     ax.set_ylabel("sessions flagged")
     ax.yaxis.set_major_formatter(plt.matplotlib.ticker.PercentFormatter(1.0, decimals=0))
     ax.grid(axis="x", visible=False)
-    ax.legend(loc="center left", bbox_to_anchor=(0.0, 0.6), fontsize=6)
+    ax.legend(loc="center left", bbox_to_anchor=(0.0, 0.6), fontsize=7.5)
     save(fig, "fig_confound", plt)
 
 
@@ -554,7 +560,7 @@ def fig_live(plt):
     ax.minorticks_off()
     ax.set_xlabel("client-side latency (s, log)")
     ax.set_ylabel("ECDF")
-    ax.legend(loc="lower right", fontsize=5.8)
+    ax.legend(loc="lower right", fontsize=7)
     save(fig, "fig_live", plt)
 
 

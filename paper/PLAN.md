@@ -51,7 +51,8 @@ if it is over 6 pages.
 | 3 | System design: SHIM, ARENA, sealed protocol | 1.0 pp | `drafts/03_design.md` |
 | 4 | Results: coverage, grid, live run | 1.75 pp | `drafts/04_results.md` |
 | 5 | Economics and the confound | 1.0 pp | `drafts/05_economics.md` |
-| 6 | Limitations and conclusion | 0.5 pp | `drafts/06_conclusion.md` |
+| 6 | Checks added after sealing (exploratory) | 0.75 pp | `drafts/06_posthoc.md` |
+| 7 | Limitations and conclusion | 0.5 pp | `drafts/07_conclusion.md` |
 | | References | 0.5 pp | `refs.bib` |
 | | **Total** | **6.0 pp** | |
 
@@ -68,6 +69,8 @@ Setup notes:
   "failure fetching", run it again; downloaded files are cached.
 - The bibliography lines in `main.tex` are commented out until `refs.bib` has its first entry,
   because an empty bibliography does not compile.
+- If Tectonic cannot reach its package server, install TeX Live (`texlive-latex-extra`,
+  `texlive-publishers`, `latexmk`) and run `PAPER_LATEX=latexmk python paper/build.py`.
 - `main.tex` also compiles unchanged on Overleaf (pdfLaTeX): upload `main.tex`, `sections/`,
   `refs.bib` and `figures/`.
 
@@ -130,11 +133,27 @@ Easiest first. After each one, Claude converts, compiles and reports pages remai
 - [ ] 4d. **Abstract** (~150 words). Written last.
 
 ## Phase 5: Fit and polish (together, 2–3 days)
-- [ ] Cut to 6 pages. Claude says which section is over budget; you choose what to cut.
-- [ ] Consistency pass: every number in the PDF matches `paper_numbers.md`.
-- [ ] Anonymisation: no names, anonymised repo link (anonymous.4open.science), clean PDF
-      metadata, self-citations in third person.
-- [ ] Read-through as a reviewer: Claude writes a skeptical review, you fix the weak points.
+- [x] Cut to 6 pages (6/6, figures regenerated at column width with 7.5–8 pt fonts, all fonts embedded).
+- [x] Consistency pass: every number in the PDF checked against `results/` (paper numbers and the
+      post-hoc tables in `results/v2/tables/`).
+- [x] Anonymisation:
+  - [x] No names or emails in any tracked file; no API keys; no personal paths. Names appear only in
+        git commit history, which Anonymous GitHub does not mirror.
+  - [x] PDF metadata stripped (`main.tex`: empty hyperref fields, `\pdfsuppressptexinfo=-1`,
+        `\pdfinfoomitdate=1`, `\pdftrailerid{}`); `pdfinfo` shows no author, creator, producer or dates.
+  - [x] Anonymised link created and in the paper:
+        <https://anonymous.4open.science/r/model-substitution-simu-0F5B>. It mirrors the branch it was
+        created from; make sure that branch has the final code before submitting.
+  - [x] No self-citations.
+- [x] Read-through as a reviewer: five mock reviews (`REVIEW_skeptical*.md`), each with outcomes.
+
+**Creating the anonymised repository link** (needs your GitHub login, so Claude cannot do it):
+1. Go to <https://anonymous.4open.science> and sign in with GitHub.
+2. Choose "Anonymize a repository" and paste `https://github.com/Amirtha-yazhini/model-substitution-simu`.
+3. Branch: the one you submit from (after merging the paper PR, `main`).
+4. Terms to anonymize (one per line): `Amirtha-yazhini`, `Amirtha`, `Yazhini`, `amirthayazhini`.
+5. Turn off the link to the original repository; set expiry after the conference (January 2027).
+6. Copy the resulting `https://anonymous.4open.science/r/<id>/` link and send it to Claude.
 
 ## Phase 6: Submit (you)
 - [ ] Create an EDAS account and register the paper early (some workshops need the title and

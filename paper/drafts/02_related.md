@@ -1,39 +1,41 @@
 # Related Work
 
-> NOTE: budget 0.5 pages (~380 words). This draft is ~400.
-> NOTE: IRIS is the closest prior work; the paragraph on it must stay precise and fair.
+> NOTE: budget 0.5 pages. Synced from sections/*.tex after the plain-language rewrite; edit here and send back.
 
-**Detectors by signal.** *Content* detectors compare response text against a reference.
-Bruckner's one-token test [@bruckner2026] asks closed questions ("a number from 1 to 100") under a
-16-token cap and scores the Jensen-Shannon divergence between answer distributions; it covered 165
-models for \$34 with an EER of 7.3%, or 10.6% at the reduced 8-cell operating point we use. KBF
-[@fang2026kbf] probes numeric facts near a model's knowledge boundary, where sizes of one family
-disagree, and reports catching 5–10% dilution with no false positives across 16 endpoints. IRIS
-[@iris2026] trains a random forest on 179 visible-string features and runs a budgeted sequential
-plan against OpenRouter models, including dilution. *Operational* detectors use metadata. GateScope
-[@lin2026gatescope] audits ten commercial gateways along four axes: content, 25-turn memory, billing
-residuals and latency coefficient of variation. *Benchmark* detectors [@cai2025] compare accuracy
-on MMLU, GPQA and GSM8K; the same paper finds software-only auditing unreliable and recommends
-trusted execution environments. *Logit* detectors need more access: RUT [@zhu2025rut] tests the rank
-uniformity of emitted tokens under a locally deployed reference, and DiFR [@difr2025] verifies
-inference from raw logits despite nondeterminism. Provenance methods [@stemma2026] and
-architecture inference [@archinfer2026] address the related question of what a model is, not whether
-it changed.
+**Auditors, grouped by what they look at.** *Text-based* auditors compare answers with a
+reference. Bruckner's one-token test [@bruckner2026] asks short closed questions ("pick a
+number from 1 to 100"), caps answers at 16 tokens, and measures how different the two answer
+distributions are (Jensen–Shannon divergence). It covered 165 models for \$34, with an equal error
+rate of 7.3%, or 10.6% with 8 of its 40 probe cells, the version we use. KBF [@fang2026kbf] asks for
+numeric facts that sit at the edge of what a model knows, where large and small models of the same
+family disagree; on 16 endpoints it flags all 155 substitutions it tested without rejecting any
+honest control, and catches dilution of 5–10% when the two models differ clearly.
+IRIS [@iris2026] asks for random numbers or strings, trains a random forest on 179 surface
+features of the answers, and sizes its own query budget; it also estimates the dilution rate. *Metadata-based* auditors look at how the service
+behaves. GateScope [@lin2026gatescope], the one peer-reviewed study among these, audited ten commercial gateways using text, 25-turn memory,
+billing mismatches and variation in response time. *Benchmark-based*
+auditors [@cai2025] compare accuracy on standard tests (MMLU, GPQA, GSM8K); the same paper
+concludes that software-only auditing is unreliable and recommends secure hardware.
+*Probability-based* auditors need deeper access: RUT [@zhu2025rut] checks the emitted tokens
+against a reference model that the auditor runs locally, and DiFR [@difr2025] needs the
+provider to share its random seed so that outputs can be checked against a trusted reference.
 
-**Replication.** A frozen-threshold holdout study [@holdout2026] matched model lineage by
-`usage.prompt_tokens`. Development pairs separated perfectly; on holdout pairs sensitivity fell to
-0.50, and only 6 of 12 pairs could be scored because of rate limits and missing fields. We adopt its
-discipline of sealing thresholds before evaluation, and extend it from one method to six.
+**Replication.** A study that fixed its thresholds before testing [@holdout2026] was perfect
+on development data but recognised only half of the same-family pairs on fresh data, and could not
+score 6 of 12. We follow its practice and apply it to six methods.
 
-**The gap.** Each detector was evaluated against a passive gateway that substitutes without regard to
-who is asking. None was tested against a gateway that recognises audit traffic, and none was run on
-the same data as the others. IRIS is closest to our setting, since it already treats dilution and
-audit budget. We differ in three ways: an adaptive adversary, a common replayed corpus on which all
-auditors see byte-identical responses, and a benign-routing control that no prior evaluation
-includes. Commercial routers already split traffic across providers by default [@openrouter_exacto],
-so a detector that flags heterogeneity will flag them.
+**What is missing.** Most auditors were tested only against a gateway that cheats the same way
+no matter who is asking, and no two were run on the same data. Two papers discuss evasion. RUT is
+designed to avoid recognisable query patterns, but has not been tested against an adversary that
+knows the method [@zhu2025rut]. IRIS, the closest to our work, tests gateways that spot its
+own probes by keyword or by answer shape, and names a fully adaptive gateway as the key open
+threat [@iris2026]. We add three things: one adaptive cheater run against
+every auditor, one shared set of recorded responses that every auditor sees byte for byte, and
+honest load balancing within one session scored as a false-alarm test (KBF's same-model controls
+test honest deployments one at a time [@fang2026kbf]). Commercial routers already spread traffic across providers by
+default [@openrouter_exacto], so an auditor that flags mixed traffic will flag them too.
 
-> REFERENCES (Claude builds refs.bib from these and checks each exists):
+> REFERENCES (all arXiv entries verified against arxiv.org on 2026-09-27; see refs.bib):
 > - cai2025: Cai, Shi, Zhao, Song. Are You Getting What You Pay For? Auditing Model Substitution in LLM APIs. arXiv:2504.04715
 > - zhu2025rut: Zhu et al. Auditing Black-Box LLM APIs with a Rank-Based Uniformity Test. arXiv:2506.06975
 > - lin2026gatescope: Lin et al. Behavioral Consistency and Transparency Analysis on LLM API Gateways (GateScope). IMC'26. arXiv:2604.21083

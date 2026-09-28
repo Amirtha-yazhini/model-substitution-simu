@@ -1,0 +1,39 @@
+# Limitations and Conclusion
+
+> NOTE: budget 0.5 pages. Synced from sections/*.tex after the plain-language rewrite; edit here and send back.
+
+**Limitations.** Five matter most.
+(i) *The main comparison uses simulated models.* The fitted pair takes its answers and speeds
+from real measurements, but its writing habits, accuracy and honest second provider are
+hand-written; detection rates in Sections [grid], [econ] and [posthoc]
+describe the simulator.
+(ii) *One real session per endpoint, and no drift.* Free quotas allowed one 240-request session
+per endpoint, so thresholds could not be set on real traffic, and the simulator's timing never drifts
+while real timing does.
+(iii) *Simplified rebuilds.* None of the auditors is the authors' code (e.g. OTE uses 8 of 40
+questions, IRIS-lite 16 of 179 features), so each result is a lower bound on the original method.
+(iv) *Free endpoints, one provider, one moment.* Groq served nearly all real traffic, and the
+live test used 96 requests per arm; honest load balancing could not be tested live.
+(v) *Simulated cheaters.* A5 is our own design and works per request; a gateway that targets
+auditing accounts would be stronger. The checks in Section [posthoc] are exploratory.
+
+**What an auditor should do.** On this evidence, a customer who suspects substitution should
+(1) rely on text-based tests such as KBF, not on timing or `system_fingerprint`; (2) pool many
+sessions into one test, with honest calibration collected at the same time; (3) send tests that look
+like ordinary traffic, from accounts that also carry real work; and (4) ask the gateway to disclose
+its routing, since honest routing and cheating look alike to timing.
+
+**Conclusion.** Auditing an LLM gateway is cheap, but not robust as published. A gateway that
+spots test-shaped requests beats every auditor and, on chat traffic, gives up almost nothing. Judged
+one session at a time, no auditor catches cheating below 10–15%. Pooling hundreds of sessions
+reaches 5% with the most specific auditor, at the price of flagging about one honest load-balancing
+audit in ten; lower rates need auditors that flag honest routing or lose to benchmark-aware
+cheating. Timing cannot tell cheating from honest load balancing, and a wrong bill needs metering
+the customer can verify.
+
+**Ethics.** We report only aggregates from WildChat and the Azure trace, stayed within free-tier
+limits, and accuse no provider.
+
+**Artifact.** The gateway, auditors, sealed rules, recorded responses and every figure are
+available at an anonymised repository: https://anonymous.4open.science/r/model-substitution-simu-0F5B. Everything except
+the live test can be rerun without an API key.
