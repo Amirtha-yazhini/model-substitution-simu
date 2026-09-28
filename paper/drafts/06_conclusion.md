@@ -31,7 +31,5 @@ traffic, disclosure of routing, and attested metering; black-box statistics alon
 last two.
 
 **Artifact.** The gateway, auditors, sealed protocols, replay corpus and every figure are available
-at an anonymised repository: \placeholder{anonymous.4open.science link}. All results except the
+at an anonymised repository: https://anonymous.4open.science/r/model-substitution-simu-0F5B. All results except the
 live run regenerate without an API key.
-
-> NOTE: the \placeholder must be replaced with the anonymised link before submission (Phase 5).
