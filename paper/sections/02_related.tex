@@ -1,21 +1,20 @@
 \section{Related Work}\label{sec:related}
-\textbf{Detectors by signal.} \emph{Content} detectors compare response text with a reference.
-The one-token test~\cite{bruckner2026} asks closed questions (``a number from 1 to 100'') under a
-16-token cap and scores the Jensen--Shannon divergence between answer distributions. It covered 165
-models for \$34 with an equal error rate of 7.3\%, or 10.6\% at the reduced 8-cell operating point we
-use. KBF~\cite{fang2026kbf} probes numeric facts near a model's knowledge boundary, where models of
-different sizes in one family disagree, and across 16 production endpoints rejects none of 16
-same-reference controls; in mixed-routing simulations it reaches 95\% detection at a substitution
-rate of 15\%. IRIS~\cite{iris2026} trains a random forest on 179 visible-string
-features of random-number and random-string answers, sizes its own query budget from a pilot, and
-estimates the dilution rate.
-\emph{Operational} detectors use metadata: GateScope~\cite{lin2026gatescope} audits ten commercial
-gateways on content, 25-turn memory, billing residuals and the coefficient of variation of latency.
-\emph{Benchmark} detectors~\cite{cai2025} compare accuracy on MMLU, GSM8K, MATH and GPQA; the same
-paper finds software-only auditing unreliable and recommends trusted execution environments.
-\emph{Reference-model} detectors need more access. RUT~\cite{zhu2025rut} tests whether the ranks of
-emitted tokens are uniform under a locally deployed copy of the model, and DiFR~\cite{difr2025}
-compares generated tokens with a trusted reference run under the same sampling seed. Provenance methods~\cite{stemma2026} and architecture
+\textbf{Detectors by signal.} Content based detectors compare response text with a reference. The
+Bruckner fingerprint based one-token test~\cite{bruckner2026} asks closed questions (``a number
+from 1 to 100'') to detect `fingerprints' under a 16-token cap and scores the Jensen--Shannon
+divergence between answer distributions. It covered 165 models for \$34 with an equal error rate
+of 7.3\%, or 10.6\% at the reduced 8-cell operating point we use. KBF~\cite{fang2026kbf} probes
+numeric facts near a model's knowledge boundary, where models of different sizes in one family
+disagree, and reports catching 5--10\% dilution with no false positives across 16 endpoints.
+IRIS~\cite{iris2026} trains a random forest on 179 visible-string features and runs a budgeted
+sequential plan against OpenRouter models,which includes dilution. Operational based detectors use
+metadata: GateScope~\cite{lin2026gatescope} audits ten commercial gateways on content, 25-turn
+memory, billing residuals and the coefficient of variation of latency. Benchmark
+detectors~\cite{cai2025} compare accuracy on MMLU, GPQA and GSM8K; the same paper finds
+software-only auditing unreliable and recommends hardware based trusted execution environments.
+RUT~\cite{zhu2025rut} tests whether the ranks of emitted tokens are uniform under a locally
+deployed reference, and DiFR~\cite{difr2025} verifies inference from raw logits despite
+nondeterminism. Provenance methods~\cite{stemma2026} and architecture
 inference~\cite{archinfer2026} ask what a model is rather than whether it changed.
 
 \textbf{Replication.} A frozen-threshold holdout study~\cite{holdout2026} matched model lineage by
@@ -24,13 +23,10 @@ sensitivity fell to 0.50, and rate limits and missing fields left only 6 of 12 p
 adopt its practice of sealing thresholds before evaluation and apply it to six methods instead of
 one.
 
-\textbf{The gap.} Adaptive gateways are not new. Cai et al.~\cite{cai2025} route benchmark queries
-honestly, RUT is designed so that its queries look like user traffic, and IRIS shows that keyword
-and output-shape filters can spot its probes and proposes rotating disguised probes in response.
-Each of these, however, tests evasion against its own probes, and no two detectors were run on
-the same data. IRIS is the closest to our setting, since it also handles dilution and audit
-budgets. We differ in three ways: one evading gateway applied to every detector, a common replayed
-corpus on which all auditors see byte-identical responses, and benign routing scored as a
-false-positive test within the same grid. Commercial routers already choose among providers of the same
-model automatically~\cite{openrouter_exacto}, so any detector that flags heterogeneity will flag
-them.
+\textbf{The gap.}So far every detector was evaluvated against gateways which behaved passively
+regardless of the request shape. None of them were tested against a gateway that recognises audit
+traffic, no two of them were reun on the same data. IRIS method is the closest one to our setting .
+The differnece is the adaptive adversary, a common replayed corpus where all auditors can see
+byte-identical responses and a benign routing control. Commerical routers in practice split
+traffic across providers by default~\cite{openrouter_exacto} any detector that flags based on this
+type of heterogeneity will tend to flag them.
