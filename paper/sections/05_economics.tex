@@ -1,3 +1,86 @@
-% Converted from drafts/05_economics.md. Budget: 1.0 page.
-\section{Economics and the Routing Confound}\label{sec:econ}
-\placeholder{Economics and the Routing Confound: 1.0 page.}
+\section{Economics and the Routing Confound}\label{sec:economics}
+\textbf{Break-even.} At dilution rate $\epsilon$ the gateway saves
+$\$1{,}000 \cdot \epsilon \cdot (1 - r)$ per \$1,000 of billed traffic, where $r = 0.115$ is the
+price ratio of substitute to genuine model. We compare this with the imputed cost of enough audit
+sessions to reach 80\% detection power, using measured token counts and public list prices
+(Fig.~\ref{fig:F2}).
+
+Cost is never the obstacle. One audit session costs between \$0.0013 (KBF) and \$0.014 (FUSE), and
+wherever an auditor reaches 80\% power the total is below one cent, against savings of tens of
+dollars. On price alone, auditing always pays.
+
+The obstacle is false positives. Repeating a session raises power, but it also raises false
+alarms: with per-session false-positive rate $f$, $k$ sessions produce at least one false alarm
+with probability $1 - (1-f)^k$. The protocol seals a family-wise budget of 5\%, which limits each
+auditor to between 6 and 15 sessions. Below $\epsilon = 0.10$ per-session power collapses. At
+$\epsilon = 0.07$ the best auditor detects 6\% of sessions on the hand-written ladder and 1\% on
+the fitted one, so no admissible number of repeats reaches 80\%. The smallest dilution an
+admissible audit detects is therefore $\epsilon^* = 0.10$ on both ladders, with a bootstrap 95\%
+interval of [0.10, 0.10]. IRIS-lite reaches it with 34\% power per session and 4 sessions on the
+hand-written ladder, or 56\% and 2 sessions on the fitted one, for \$0.003--\$0.006.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_break_even}
+\caption{Break-even: adversary saving per \$1,000 of traffic against the imputed cost of an audit reaching 80\% power, by dilution rate. No admissible audit exists left of $\epsilon^*$ (shaded).}
+\label{fig:F2}
+\end{figure}
+
+One caveat moves this number. IRIS-lite sets $\epsilon^*$ on both ladders, but on real recordings
+its features cannot separate 20b from 120b (Section~\ref{sec:real}), so its signal on the mock
+comes from hand-written surface habits. Removing it in a post-hoc, unsealed check leaves
+$\epsilon^* = 0.10$ on the hand-written ladder and raises it to $0.15$ on the fitted ladder, in both
+cases set by GATEOPS. We therefore claim $\epsilon^* \in [0.10, 0.15]$. A rational gateway sets
+$\epsilon$ just below this range. At $\epsilon = 0.05$ it still saves \$44 per \$1,000, and no
+auditor here detects it within a false-alarm budget a customer would accept.
+
+\textbf{The confound.} A3 at $\epsilon = 0.10$ sends 10\% of traffic to a cheaper model. A11 spreads
+traffic across honest providers of the correct model. The first is fraud; the second is ordinary
+load balancing, which routers do by default. Fig.~\ref{fig:F6} and Table~\ref{tab:confound} compare
+them over 200 sessions each.
+
+\begin{table}[t]
+\centering
+\caption{A3 ($\epsilon = 0.10$, fraud) against A11 (benign routing), hand-written / fitted ladder. AUROC below 0.5 means benign routing scores as more suspicious than fraud.}
+\label{tab:confound}
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Auditor & Flags A3 & Flags A11 & AUROC \\
+\midrule
+IRIS-lite & 34\% / 56\% & 0\% / 0\% & 0.96 / 0.98 \\
+OTE & 4\% / 0\% & 0\% / 0\% & 0.68 / 0.48 \\
+GATEOPS & 18\% / 5\% & 96\% / 100\% & 0.03 / 0.00 \\
+FUSE & 2\% / 0\% & 5\% / 50\% & 0.35 / 0.01 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_confound}
+\caption{Score distributions for A3 (fraud) and A11 (benign routing) per auditor. Timing-based scores rank benign routing above fraud.}
+\label{fig:F6}
+\end{figure}
+
+GATEOPS finds benign routing \emph{more} anomalous than fraud (AUROC 0.00--0.03), and FUSE inherits
+the problem: on the fitted ladder it flags half of all honest routing sessions and no fraud
+sessions. Timing and metadata measure whether traffic is \emph{heterogeneous}, not whether the
+model is \emph{wrong}, and honest routing is as heterogeneous as traffic gets. The text auditors
+separate the two arms only because our simulated alternate provider returns nearly identical text.
+A real alternate provider with a different inference engine or quantisation would shift the text
+as well, and the gap would narrow.
+
+We read this as evidence that ``model substitution'' covers three violations, each needing
+different evidence:
+\begin{itemize}
+\item \textbf{Identity:} the weights are wrong (A1, A2, A7). Content signals can observe this.
+\item \textbf{Disclosure:} routing happens but is not disclosed (A3 vs.\ A11). The two arms differ
+  only in intent, which no client-side measurement observes.
+\item \textbf{Billing:} the invoice does not match the service (A8). Checking this needs an
+  invoice, and free tiers issue none.
+\end{itemize}
+Only identity is a detection problem for black-box auditors. Disclosure needs an obligation on the
+gateway to report its routing, and billing needs verifiable metering. This arrives at the
+recommendation of hardware attestation in~\cite{cai2025} from the other direction: part of what
+auditors are asked to detect cannot be observed from the client at all.
