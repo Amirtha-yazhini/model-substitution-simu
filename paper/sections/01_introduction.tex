@@ -8,19 +8,20 @@ model, which means that a gateway that swaps one request in ten saves about \$88
 billed traffic.
 
 So far trusted hardware based attestation method~\cite{cai2025} proves to be the only definite way
-to check this,but they dont come affordable and gateways do not offer such methods today.What a
+to check this,but gateways do not offer such methods today.What a
 client can do is check the responses using black box auditors .They send probe requests and based
 on the response which include text,timing and other metadata, they can check whether the
 required/advertised model has actually answered.
 
-These black-box auditors employ several statistical methods. From April 2025 onwards at least 8
+These black-box auditors employ several statistical methods. From April 2025 onwards at least 7
 such auditors have been proposed~\cite{cai2025,zhu2025rut,lin2026gatescope,fang2026kbf,bruckner2026,iris2026,difr2025}.
 Each of them were tested on their own test-bed with their own adversaries.They choose thresholds
 chosen on the same data which is reported. A frozen-threshold replication~\cite{holdout2026} shows
 how fragile this is in practice. A method with perfect accuracy during development fell to 50\%
 sensitivity on fresh model-pairs and half of those pairs could not be scored at all. The proposed
 auditing methods so far have never been compared on a common testbed against a common adversary,
-and none of then have been tested against a gateway which can detect auditing.
+and the papers that consider a gateway which can detect auditing~\cite{cai2025,zhu2025rut,iris2026}
+test it only against their own probes.
 
 \textbf{Threat model.} The user sends HTTPS requests to a gateway that seems to provide model $M$.
 Routing and response metadata is under complete control of the gateway.For each request three
@@ -38,15 +39,16 @@ $M$ is permitted.
 \textbf{Contributions.}
 \begin{itemize}
 \item \textbf{A shared adversarial testbed:} SHIM is an OpenAI-compatible gateway which has twelve
-  adversary arms and a hidden ledger with the answers. Four of the arms - probe-aware
-  evasion,laundering,canary-awarness and benign routing are novel
+  adversary arms and a hidden ledger with the answers. Arms such as probe-aware
+  evasion and canary-awarness were studied before for single detectors~\cite{cai2025,iris2026};
+  here every arm runs against every detector
 \item \textbf{A sealed comparision of six auditors:} We have reimplemented five of the published
   auditing methods and added an e-value fusion. All of them which are evaluated with thresholds
   are hashed and tagged appropriately. An auditor that cannot run on a specific arm reports as
   `uninformative'.
-\item \textbf{Practical Deployability:} A logprob based auditor runs on none of the endpoints and
-  hence seems to have no real life practicality . The most recent one token fingerprint method
-  runs on 4 of them as hidden reasoning steps are present in most of the real life models.
+\item \textbf{Practical Deployability:} None of the endpoints returns the logprobs our version of
+  the rank-based auditor needs. The most recent one token fingerprint method
+  runs on 4 of them as hidden reasoning steps are present in many of the real life models.
 \item \textbf{Three negative results:} An auditor becomes chance-like in presence of a probe-aware
   evasion.False positive budgets set a dilution floor of $\epsilon^* = 0.10$. Timing based auditors
   cannot tell fraud from sanctioned routing.

@@ -6,14 +6,15 @@ ladder unless stated otherwise.
 We probed 14 free-tier model endpoints on three providers, of which 11 returned completions. For
 each we recorded whether it returns \texttt{usage}, \texttt{usage.cached\_tokens}, logprobs and
 \texttt{system\_fingerprint}, and whether it spends hidden reasoning tokens (Fig.~\ref{fig:F3}).
-IRIS-lite, KBF, BENCH and GATEOPS latency run on all 11. Three auditors are limited. RUT needs
-logprobs, which no endpoint returns, so its coverage is 0/11. GateScope's billing channel needs
+IRIS-lite, KBF, BENCH and GATEOPS latency run on all 11. Three auditors are limited. Our RUT variant needs
+logprobs, which no endpoint returns, so its coverage is 0/11; the published RUT instead uses a
+locally hosted copy of the model~\cite{zhu2025rut}. GateScope's billing channel needs
 \texttt{cached\_tokens} and runs on 2/11. The one-token method as published runs on only 4/11: four
 endpoints spend 26--36 hidden reasoning tokens before answering, so a 16-token cap returns an empty
 string.
 
-The original census excluded 0.76\% of its models for reasoning traces~\cite{bruckner2026}; on
-this fleet the share is 36\%. Raising the cap to 256 tokens restores coverage to 10/11 but
+In the original census 0.76\% of responses carried reasoning traces~\cite{bruckner2026}; on
+this fleet 36\% of endpoints (4 of 11) reason. Raising the cap to 256 tokens restores coverage to 10/11 but
 multiplies the cost of each probe. The cheapest known auditor became more expensive because the
 models changed, not the method.
 
@@ -109,8 +110,9 @@ The honest A0 passes both calibration-free tests. The real speed gap is 18\%, fa
 threefold gap the hand-written mock assumed, yet latency still catches full substitution (KS 0.50).
 OTE misses it at 12 repeats per cell ($p = 0.10$), although 30 repeats caught the same swap in the
 census, so the number of repeats per cell matters. A3, with 14 of 96 requests swapped, passes both
-tests. A9 pads responses toward the 0.9\,s mean reported by GateScope~\cite{lin2026gatescope}, but
+tests. A9 pads responses toward a 0.9\,s mean we chose, with the latency CV GateScope reports
+(0.63~\cite{lin2026gatescope}), but
 Groq answers in 0.66\,s, so the padding made the substitute slower and noisier than the real model
-and it was caught (KS 0.43). An evasion tuned to a published baseline instead of the live one gives
+and it was caught (KS 0.43). An evasion tuned to a fixed target instead of the live endpoint gives
 itself away. Benign routing could not be run live, because no second free provider serves
 \texttt{gpt-oss-120b}.
