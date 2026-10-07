@@ -60,6 +60,14 @@ FUSE & 2\% / 0\% & 5\% / 50\% & 0.35 / 0.01 \\
 \label{fig:F6}
 \end{figure}
 
+GATEOPS finds benign routing \emph{more} anomalous than fraud (AUROC 0.00--0.03), and FUSE inherits
+the problem: on the fitted ladder it flags half of all honest routing sessions and no fraud
+sessions. Timing and metadata measure whether traffic is \emph{heterogeneous}, not whether the
+model is \emph{wrong}, and honest routing is as heterogeneous as traffic gets. The text auditors
+separate the two arms only because our simulated alternate provider returns nearly identical text.
+A real alternate provider with a different inference engine or quantisation would shift the text
+as well, and the gap would narrow.
+
 We read this as evidence that ``model substitution'' covers three violations, each needing
 different evidence:
 \begin{itemize}
