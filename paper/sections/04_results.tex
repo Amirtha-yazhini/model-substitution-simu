@@ -7,18 +7,21 @@ We probed 14 free-tier model endpoints on three providers, of which 11 returned 
 each we recorded whether it returns \texttt{usage}, \texttt{usage.cached\_tokens}, logprobs and
 \texttt{system\_fingerprint}, and whether it spends hidden reasoning tokens
 (Fig.~\ref{fig:F3}). IRIS-lite, KBF, BENCH and GATEOPS latency run on all 11. Three auditors are
-limited. RUT needs logprobs, which no endpoint returns, so its coverage is 0/11. GateScope's billing
+limited. Our RUT variant ranks each emitted token using the endpoint's own logprobs, which no
+endpoint returns, so it runs on 0/11; the published method instead ranks tokens under a locally
+hosted copy of the model~\cite{zhu2025rut}, which we did not deploy. GateScope's billing
 channel needs \texttt{cached\_tokens} and runs on 2/11. The one-token method \emph{as published}
 runs on only 4/11: four endpoints spend 26--36 hidden reasoning tokens before answering, so a
-16-token cap returns an empty string. The original census excluded 0.76\% of its models for
-reasoning traces~\cite{bruckner2026}; on this fleet the share is 36\%. Raising the cap to 256 tokens
+16-token cap returns an empty string. In the original census only 0.76\% of responses carried
+a reasoning trace~\cite{bruckner2026}; on this fleet 4 of 11 endpoints (36\%) reason before
+answering. Raising the cap to 256 tokens
 restores coverage to 10/11 but multiplies the cost of each probe. The cheapest known auditor became
 more expensive because the models changed, not the method.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{fig_coverage}
-\caption{Auditor coverage on 11 working free-tier endpoints. RUT needs logprobs (0/11); OTE with its published 16-token cap fails on reasoning models (4/11).}
+\caption{Auditor coverage on 11 working free-tier endpoints. Our RUT variant needs endpoint logprobs (0/11); OTE with its published 16-token cap fails on reasoning models (4/11).}
 \label{fig:F3}
 \end{figure}
 
@@ -29,11 +32,12 @@ substitution (A1) with AUROC 1.00. Three other results are more informative.
 
 \emph{Probe-aware evasion beats every auditor.} Against A5 the best AUROC, FUSE included, is 0.56
 on the hand-written ladder and 0.61 on the fitted one. Every auditor's probes are short, capped and
-repeated. That is what makes them cheap, and it is also exactly what A5 looks for. A probe that did
+repeated. These properties keep probes cheap, and they are the features A5 checks. A probe that did
 not look like a probe would need longer prompts, larger token budgets and fewer repeats, and would
-therefore cost more.
+therefore cost more. IRIS proposes one such design, embedding the probe in a real task
+request~\cite{iris2026}; IRIS-lite does not implement it.
 
-\emph{Canary-awareness defeats only the benchmark auditor.} A static list of public benchmark
+\emph{Benchmark evasion defeats only the benchmark auditor.} As anticipated in~\cite{cai2025}, a static list of public benchmark
 questions drops BENCH to AUROC 0.48 on A10, while auditors that write their own probes still reach
 1.00.
 
@@ -46,7 +50,7 @@ time, GATEOPS returns \emph{uninformative} rather than a false pass, as the prot
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{fig_evasion}
-\caption{AUROC of each auditor against each arm (v2, hand-written ladder). In row A5 no auditor exceeds 0.56. RUT is inapplicable throughout.}
+\caption{AUROC of each auditor against each arm (v2, hand-written ladder). In row A5 no auditor exceeds 0.56. Our RUT variant is inapplicable throughout.}
 \label{fig:F4}
 \end{figure}
 
@@ -111,8 +115,8 @@ The honest A0 passes both calibration-free tests. The real speed gap is 18\%, fa
 threefold gap the hand-written mock assumed, yet latency still catches full substitution (KS 0.50).
 OTE misses it at 12 repeats per cell ($p = 0.10$), although 30 repeats caught the same swap in the
 census, so the number of repeats per cell matters. A3, with 14 of 96 requests swapped, passes both
-tests. A9 pads responses toward the 0.9\,s mean reported by GateScope~\cite{lin2026gatescope}, but
-Groq answers in 0.66\,s, so the padding made the substitute slower and noisier than the real model
-and it was caught (KS 0.43). An evasion tuned to a published baseline instead of the live one gives
-itself away. Benign routing could not be run live, because no second free provider serves
+tests. A9 pads responses toward a fixed 0.9\,s mean with the latency coefficient of variation that
+GateScope reports for its baseline (0.63~\cite{lin2026gatescope}), but Groq answers in 0.66\,s, so
+the padding made the substitute slower and noisier than the real model and it was caught (KS 0.43).
+Latency shaping only hides a substitute if it is tuned to the live endpoint. Benign routing could not be run live, because no second free provider serves
 \texttt{gpt-oss-120b}.

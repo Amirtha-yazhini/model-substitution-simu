@@ -10,8 +10,9 @@ endpoint, so thresholds could not be calibrated on real traffic, and real-endpoi
 permutation p-values instead of sealed thresholds.
 (iii)~\emph{Reimplementations at reduced operating points.} None of the auditors is the original
 authors' code. OTE uses 8 of 40 cells, IRIS-lite 16 of 179 features, KBF and BENCH 15 and 12
-items, and GATEOPS omits GateScope's memory channel. Each result is a lower bound on the original
-method.
+items, and GATEOPS omits GateScope's memory channel. RUT reads endpoint logprobs instead of a local
+reference model, and IRIS-lite omits the disguised and task-embedded probes that IRIS proposes
+against probe-aware routing. Our results may therefore understate the original methods.
 (iv)~\emph{One free tier at one point in time.} Groq served nearly all real traffic; the other
 providers returned payment errors or ran out of daily quota. Free tiers change from month to month.
 (v)~\emph{Simulated adversaries and a small live run.} A5 is our own classifier, and a real one
@@ -21,7 +22,7 @@ could not be run live.
 \textbf{Conclusion.} We ran five published model-substitution auditors and one new fusion against
 a common adversarial gateway, under thresholds sealed before evaluation. Auditing is cheap, at well
 under a cent per session, but it is not robust. A gateway that recognises audit-shaped requests
-keeps every auditor at chance, and the shape it recognises is the one that makes probes cheap.
+keeps every auditor we implemented at chance, and the shape it recognises is the one that makes probes cheap.
 Below $\epsilon^* \approx$ 0.10--0.15 no admissible audit detects dilution, because false-positive
 budgets, not cost, limit how often an audit can be repeated. Timing auditors flag sanctioned
 routing more readily than fraud, which separates identity violations, which content can reveal,

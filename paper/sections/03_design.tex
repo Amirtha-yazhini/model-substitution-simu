@@ -14,7 +14,7 @@ in this paper is computed from it, which no audit of a real gateway can do.
 
 \begin{table}[t]
 \centering
-\caption{Adversary arms. Bold arms appear in no prior evaluation. A4 and A11 serve the genuine model and test specificity.}
+\caption{Adversary arms. A4 and A11 serve the genuine model and test specificity.}
 \label{tab:arms}
 \small
 \begin{tabular}{@{}lll@{}}
@@ -26,22 +26,23 @@ A1 & Always serves the substitute & subst. \\
 A2 & Same model name, other provider & subst. \\
 A3 & Substitute on a fraction $\epsilon$ of requests & subst. \\
 A4 & Right model, altered sampling settings & genuine \\
-\textbf{A5} & Honest only on audit-shaped requests & subst. \\
+A5 & Honest only on audit-shaped requests & subst. \\
 A6 & Replays cached answers to repeated prompts & subst. \\
-\textbf{A7} & Substitute answers, second pass restyles & subst. \\
+A7 & Substitute answers, second pass restyles & subst. \\
 A8 & Inflates reported token usage & subst. \\
 A9 & Adds delay to mimic the genuine latency & subst. \\
-\textbf{A10} & Honest on public benchmark questions & subst. \\
-\textbf{A11} & Splits traffic across honest providers of $M$ & genuine \\
+A10 & Honest on public benchmark questions & subst. \\
+A11 & Splits traffic across honest providers of $M$ & genuine \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 Three arms need more explanation. \textbf{A5} (probe-aware evasion) sends a request to the genuine
 model when it \emph{looks like an audit}: at most 24 \texttt{max\_tokens}, a prompt under 220
-characters, a prompt seen before, or a closed-answer phrase such as ``reply with only''. It needs
-no knowledge of any particular probe set, only of the shape that cheap probes have in common.
-\textbf{A10} keeps a static list of public benchmark questions and answers those honestly.
+characters, a prompt seen before, or a closed-answer phrase such as ``reply with only''. Unlike the probe-specific filters tested in~\cite{iris2026}, it needs no knowledge of any
+particular probe set, only of the shape that cheap probes have in common.
+\textbf{A10} keeps a static list of public benchmark questions and answers those honestly, the
+benchmark evasion described in~\cite{cai2025}.
 \textbf{A11} is not an attack. It spreads traffic across legitimate providers of the correct model,
 as commercial routers do by default~\cite{openrouter_exacto}, and serves as a false-positive test.
 
@@ -74,7 +75,7 @@ IRIS-lite & \cite{iris2026} & 16 surface-string features, random forest \\
 GATEOPS & \cite{lin2026gatescope} & latency KS test, fingerprint, billing \\
 KBF & \cite{fang2026kbf} & agreement on 15 knowledge-boundary facts \\
 BENCH & \cite{cai2025} & accuracy on 12 MMLU/GPQA/GSM8K items \\
-RUT & \cite{zhu2025rut} & token-rank uniformity (needs logprobs) \\
+RUT & \cite{zhu2025rut} & token-rank uniformity from endpoint logprobs \\
 FUSE & new & product of e-values, flag at $E > 1/\alpha$ \\
 \bottomrule
 \end{tabular}

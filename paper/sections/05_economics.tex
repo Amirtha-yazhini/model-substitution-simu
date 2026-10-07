@@ -5,11 +5,11 @@ price ratio of substitute to genuine model. We compare this with the imputed cos
 sessions to reach 80\% detection power, using measured token counts and public list prices
 (Fig.~\ref{fig:F2}).
 
-Cost is never the obstacle. One audit session costs between \$0.0013 (KBF) and \$0.014 (FUSE), and
+Audit cost is negligible. One audit session costs between \$0.0013 (KBF) and \$0.014 (FUSE), and
 wherever an auditor reaches 80\% power the total is below one cent, against savings of tens of
-dollars. On price alone, auditing always pays.
+dollars per \$1,000.
 
-The obstacle is false positives. Repeating a session raises power, but it also raises false
+The binding constraint is the false-positive budget. Repeating a session raises power, but it also raises false
 alarms: with per-session false-positive rate $f$, $k$ sessions produce at least one false alarm
 with probability $1 - (1-f)^k$. The protocol seals a family-wise budget of 5\%, which limits each
 auditor to between 6 and 15 sessions. Below $\epsilon = 0.10$ per-session power collapses. At

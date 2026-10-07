@@ -1,13 +1,13 @@
 \begin{abstract}
 LLM APIs bill for a named model, but nothing in a response proves which model produced it, so an
 intermediary can serve a cheaper model on some requests and still charge for the expensive one.
-At least eight black-box detectors have been proposed, each tested on its own testbed against its
+At least seven black-box detectors have been proposed, each tested on its own testbed against its
 own adversary. We built SHIM, an OpenAI-compatible gateway with twelve switchable cheating
 strategies and a hidden ground-truth ledger, and ARENA, which runs five reimplemented detectors and
 a new e-value fusion under thresholds sealed by SHA-256 before evaluation. Of 11 free-tier
-endpoints, the logprob-based detector runs on none and the one-token method, as published, on 4.
-A gateway that answers audit-shaped requests honestly keeps every detector at chance
-(AUROC~$\le$~0.61). An audit costs under one cent, yet no admissible audit detects substitution on
+endpoints, the one-token method runs as published on only 4, because hidden reasoning uses up its
+token cap. A gateway that answers audit-shaped requests honestly keeps all six of our auditors at
+chance (AUROC~$\le$~0.61). An audit costs under one cent, yet no admissible audit detects substitution on
 fewer than 10\% of requests, a rate that still saves the gateway 8.8\% of the bill. Timing
 detectors also flag benign load balancing more often than fraud.
 \end{abstract}

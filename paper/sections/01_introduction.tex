@@ -12,14 +12,15 @@ offer this today, and the client has no way to inspect them. What the client can
 responses. A black-box \emph{auditor} sends probe requests and decides, from the text, timing and
 metadata that come back, whether the advertised model answered.
 
-At least eight such auditors have appeared since April
+At least seven such auditors have appeared since April
 2025~\cite{cai2025,zhu2025rut,lin2026gatescope,fang2026kbf,bruckner2026,iris2026,difr2025}. Each
 was evaluated on its own testbed and against its own adversary, usually with thresholds chosen on
 the same data it reports. A frozen-threshold replication~\cite{holdout2026} shows how fragile this
 is: a method with perfect development accuracy fell to 50\% sensitivity on fresh model pairs, and
 half of those pairs could not be scored at all. The auditors have never been compared on a common
-testbed against a common adversary, and none has been tested against a gateway that expects to be
-audited.
+testbed against a common adversary. Several papers anticipate a gateway that answers recognised
+audit queries honestly~\cite{cai2025,zhu2025rut,iris2026}, but each tests that threat only against
+its own probes.
 
 \textbf{Threat model.} The client sends requests over HTTPS to a gateway that advertises model $M$.
 The gateway controls routing and response metadata. For each request it may forward to $M$, to a
@@ -36,16 +37,16 @@ as load balancing across legitimate providers of $M$, is permitted and must not 
 \textbf{Contributions.}
 \begin{itemize}
 \item \textbf{A shared adversarial testbed.} SHIM is an OpenAI-compatible gateway with twelve
-  adversary arms and a hidden ledger of which backend really answered. Four of the arms
-  (probe-aware evasion, laundering, canary-awareness and benign routing) appear in no prior
-  evaluation.
+  adversary arms and a hidden ledger of which backend really answered. Threats that earlier papers
+  studied one detector at a time, such as probe-aware routing, benchmark evasion and routing across
+  providers, run here against every detector at once.
 \item \textbf{A sealed comparison of six auditors.} We reimplement five published methods and add an
   e-value fusion, all evaluated under thresholds hashed and tagged before evaluation. An auditor
   that cannot run reports \emph{uninformative}, never \emph{pass}.
-\item \textbf{Deployability on real endpoints.} On 11 free-tier endpoints, a logprob-based auditor
-  runs on none and the one-token method as published on 4, because hidden reasoning tokens use up
-  its token budget.
-\item \textbf{Three negative results.} Probe-aware evasion keeps every auditor at chance.
+\item \textbf{Deployability on real endpoints.} On 11 free-tier endpoints, the one-token method as
+  published runs on 4, because hidden reasoning tokens use up its token budget, and no endpoint
+  returns token logprobs.
+\item \textbf{Three negative results.} Probe-aware evasion keeps every auditor we implemented at chance.
   False-positive budgets, not audit cost, set a dilution floor of $\epsilon^* \approx 0.10$. Timing
   auditors cannot tell fraud from sanctioned routing, which splits ``substitution'' into identity,
   disclosure and billing violations.
