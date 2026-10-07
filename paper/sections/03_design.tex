@@ -6,8 +6,8 @@ auditors against it under a sealed protocol.
 \texttt{usage} block and \texttt{system\_fingerprint}. An auditor points its base URL at SHIM and can
 tell it apart from a provider only by the resulting behaviour. Each request passes through one of
 twelve adversary arms (Table~\ref{tab:arms}), which choose the backend that answers and how the
-response is rewritten.Randomisation of the arms are done based on the hash of the request body so
-to preserve reproducibility.For every request SHIM records the arm, the backend that really
+response is rewritten. Randomisation of the arms are done based on the hash of the request body so
+to preserve reproducibility. For every request SHIM records the arm, the backend that really
 answered, latency, reported and true token usage, and the cost incurred from public price tables.
 Every ROC curve and false-positive rate in this paper is computed from this record.
 
@@ -38,7 +38,7 @@ A11 & Splits traffic across honest providers of $M$ & genuine \\
 
 \textbf{A5} (probe-aware evasion) sends a request to the genuine model when it looks like an audit
 this could look like a prompt with at most 24 \texttt{max\_tokens}, a prompt under 220 characters,
-a prompt seen before, or contains text like ``reply with only''.\textbf{A10} keeps a list of public
+a prompt seen before, or contains text like ``reply with only''. \textbf{A10} keeps a list of public
 benchmark questions and answers those honestly. \textbf{A11} is not an attack. It spreads traffic
 across legitimate providers of the correct model, as commercial routers do by
 default~\cite{openrouter_exacto}, and serves as a false-positive test.
@@ -77,7 +77,7 @@ FUSE & new & product of e-values, flag at $E > 1/\alpha$ \\
 \end{tabular}
 \end{table}
 
-\textbf{Sealed protocol:}A single session is an audit of 495 queries.. Each threshold is the
+\textbf{Sealed protocol:} A single session is an audit of 495 queries. Each threshold is the
 largest score observed over $N$ honest (A0) calibration sessions, which bounds the marginal
 false-positive rate by $1/(N+1)$, and a session is flagged only when its score strictly exceeds
 the threshold. With $\alpha = 0.01$ and $N = 300$, the probability that the realised

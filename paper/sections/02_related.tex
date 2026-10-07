@@ -8,7 +8,7 @@ numeric facts near a model's knowledge boundary, where models of different sizes
 disagree, and reports 95\% detection at a 15\% substitution rate with no false positives on 16
 same-model controls.
 IRIS~\cite{iris2026} trains a random forest on 179 visible-string features and runs a budgeted
-sequential plan against OpenRouter models,which includes dilution. Operational based detectors use
+sequential plan against OpenRouter models, which includes dilution. Operational based detectors use
 metadata: GateScope~\cite{lin2026gatescope} audits ten commercial gateways on content, 25-turn
 memory, billing residuals and the coefficient of variation of latency. Benchmark
 detectors~\cite{cai2025} compare accuracy on MMLU, GPQA, GSM8K and MATH; the same paper finds
@@ -24,10 +24,10 @@ sensitivity fell to 0.50, and rate limits and missing fields left only 6 of 12 p
 adopt its practice of sealing thresholds before evaluation and apply it to six methods instead of
 one.
 
-\textbf{The gap.}So far every detector was evaluvated against gateways which behaved passively
+\textbf{The gap.} So far every detector was evaluated against gateways which behaved passively
 regardless of the request shape. Cai et al.~\cite{cai2025}, RUT and IRIS consider a gateway that recognises audit
-traffic, but only against their own probes, and no two of them were reun on the same data. IRIS method is the closest one to our setting .
-The differnece is the adaptive adversary, a common replayed corpus where all auditors can see
-byte-identical responses and a benign routing control. Commerical routers in practice split
+traffic, but only against their own probes, and no two of them were run on the same data. IRIS method is the closest one to our setting.
+The difference is the adaptive adversary, a common replayed corpus where all auditors can see
+byte-identical responses and a benign routing control. Commercial routers in practice split
 traffic across providers by default~\cite{openrouter_exacto} any detector that flags based on this
 type of heterogeneity will tend to flag them.
