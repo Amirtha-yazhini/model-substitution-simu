@@ -2,21 +2,15 @@
 All grid, false-positive and power numbers use protocol v2 and are given as hand-written / fitted
 ladder unless stated otherwise.
 
-\subsection{Coverage on real endpoints}
+\subsection{Coverage results}
 We probed 14 free-tier model endpoints on three providers, of which 11 returned completions. For
 each we recorded whether it returns \texttt{usage}, \texttt{usage.cached\_tokens}, logprobs and
 \texttt{system\_fingerprint}, and whether it spends hidden reasoning tokens (Fig.~\ref{fig:F3}).
-IRIS-lite, KBF, BENCH and GATEOPS latency run on all 11. Three auditors are limited. Our RUT variant needs
-logprobs, which no endpoint returns, so its coverage is 0/11; the published RUT instead uses a
-locally hosted copy of the model~\cite{zhu2025rut}. GateScope's billing channel needs
-\texttt{cached\_tokens} and runs on 2/11. The one-token method as published runs on only 4/11: four
-endpoints spend 26--36 hidden reasoning tokens before answering, so a 16-token cap returns an empty
-string.
-
-In the original census 0.76\% of responses carried reasoning traces~\cite{bruckner2026}; on
-this fleet 36\% of endpoints (4 of 11) reason. Raising the cap to 256 tokens restores coverage to 10/11 but
-multiplies the cost of each probe. The cheapest known auditor became more expensive because the
-models changed, not the method.
+GATEOPS billing, RUT, OTE with 16 token cap have very low coverage with RUT being zero.
+The published RUT method requires a locally hosted copy of the model~\cite{zhu2025rut} which is
+impractical hence the low coverage. The models undergo reasoning steps which requires more tokens
+hence, the one token method was changed to have a 256 token cap and the coverage increased
+substantially but this could lead to an increase in cost of the probes.
 
 \begin{figure}[t]
 \centering
@@ -27,20 +21,13 @@ models changed, not the method.
 
 \subsection{The sealed grid}
 Each of the twelve arms was audited in 30 sessions per ladder and scored against 500 honest holdout
-sessions under the v2 thresholds (Fig.~\ref{fig:F4}). Every applicable auditor catches full
-substitution (A1) with AUROC 1.00. Three other results are more informative. \emph{Probe-aware
-evasion beats every auditor.} Against A5 the best AUROC, FUSE included, is 0.56 on the hand-written
-ladder and 0.61 on the fitted one. Every auditor's probes are short, capped and repeated. That is
-what makes them cheap, and it is also exactly what A5 looks for. A probe that did not look like a
-probe would need longer prompts, larger token budgets and fewer repeats, and would therefore cost
-more. \emph{Canary-awareness defeats only the benchmark auditor.} A static list of public
-benchmark questions drops BENCH to AUROC 0.48 on A10, while auditors that write their own probes
-still reach 1.00. \emph{Specificity fails on genuine traffic.} A4 serves the correct weights with
-altered sampling settings, yet OTE and FUSE flag it with AUROC 1.00 and IRIS-lite with 0.94--0.96:
-a shifted answer distribution reads as a different model. GATEOPS scores benign routing (A11) at
-AUROC 1.00, which Section~\ref{sec:economics} examines. Against the cache-replay arm A6, which has
-no real response time, GATEOPS returns \emph{uninformative} rather than a false pass, as the
-protocol requires.
+sessions under the v2 thresholds (Fig.~\ref{fig:F4}). The applicable models perform well against
+A1, A7, A8, A9 having an AUROC of 1. For A10 the benchmarked based detectors fail as expected, other
+detectors succeed as the tend to generalise the probes. OTE and Iris-lite flag genuine altered
+sample settings (A4). Both of these use text-only audit and even with correct weights they seem to
+detect actual substitution. A5 has the most interesting results an aware adversary can bypass all
+the methods. GATEOPS scores benign routing (A11) at AUROC 1.00, which Section~\ref{sec:economics}
+examines.
 
 \begin{figure}[t]
 \centering
@@ -49,17 +36,14 @@ protocol requires.
 \label{fig:F4}
 \end{figure}
 
-\subsection{False-positive rates, v1 and v2}
-Under v1 (100 calibration sessions, \texttt{>=} rule), the sealed 50-session holdout gave GATEOPS a
-false-positive rate of 10.0\% [4.3, 21.4] against a 1\% target, and KBF and BENCH 4.0\%. On 700
-further honest sessions, GATEOPS exceeded its v1 threshold on about 5\% of sessions in every block,
-so the 0/100 in the calibration block was an unlucky draw, roughly one in 300. Separately, the
-\texttt{>=} rule turned ties into flags, which doubled the rate for KBF and BENCH from 2\% to 4\%.
-Protocol v2 fixes both problems (Section~\ref{sec:design}). On a 500-session holdout every
-auditor's false-positive rate is at most 0.8\% [0.3, 2.0] (KBF), and GATEOPS falls to 0/500
-(Fig.~\ref{fig:F5}). More generally, a maximum over 100 honest sessions leaves a real chance that
-some threshold misses its target, and only a larger calibration set, sealed in advance, makes that
-chance small.
+\subsection{False-positive rates v1 and v2}
+Under v1 (100 calibration sessions, \texttt{>=} rule) GATEOPS, KBF and BENCH exceeded their required
+false positive rate in the 50-session holdout. On 700 further honest sessions, GATEOPS exceeded its
+v1 threshold on about 5\% of sessions in every block, so the 0/100 in the calibration block was an
+unlucky draw, roughly one in 300. For KBF and BENCH the \texttt{>=} ambiguity increased their false
+positive rate. In the v2 run the GATEOPS false positive rate falls to 0\% and for KBF and BENCH it
+falls to 0.8\% for 500 sessions (Fig.~\ref{fig:F5}). This is why v2 was introduced and used along
+with a larger, sealed calibration set.
 
 \begin{figure}[t]
 \centering
@@ -81,11 +65,10 @@ text (cross-validated accuracy 0.46, $p = 0.96$), although they do separate a di
 honest requests to the 120b, so a changed fingerprint is routine and not evidence of substitution.
 
 \subsection{Live run}
-Latency cannot be replayed, so we placed five SHIM servers in front of Groq: an honest reference
-(REF), A0, A1, A3 at $\epsilon = 0.10$, and A9 (Table~\ref{tab:live}). Each server received 96
-requests (8 OTE cells $\times$ 12 repeats), timed at the client and interleaved in a new random
-order each round so that load drift could not show up as a difference between arms. Decision rules
-were hashed before the first request. All 480 requests succeeded, in 25 minutes and at no cost.
+Five SHIM servers were placed in front of Groq to replay latency. An honest reference (REF), A0, A1,
+A3 at $\epsilon = 0.10$ and A9 (Table~\ref{tab:live}) were used. Each server received 96 requests
+(8 OTE cells $\times$ 12 repeats), timed at the client and interleaved in a new random order each
+round so that load drift could not show up as a difference between arms.
 
 \begin{table}[t]
 \centering
@@ -111,8 +94,5 @@ threefold gap the hand-written mock assumed, yet latency still catches full subs
 OTE misses it at 12 repeats per cell ($p = 0.10$), although 30 repeats caught the same swap in the
 census, so the number of repeats per cell matters. A3, with 14 of 96 requests swapped, passes both
 tests. A9 pads responses toward a 0.9\,s mean we chose, with the latency CV GateScope reports
-(0.63~\cite{lin2026gatescope}), but
-Groq answers in 0.66\,s, so the padding made the substitute slower and noisier than the real model
-and it was caught (KS 0.43). An evasion tuned to a fixed target instead of the live endpoint gives
-itself away. Benign routing could not be run live, because no second free provider serves
-\texttt{gpt-oss-120b}.
+(0.63~\cite{lin2026gatescope}), but Groq answers in 0.66\,s, so the padding made the substitute
+slower and noisier than the real model and it was caught (KS 0.43).
