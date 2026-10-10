@@ -1,3 +1,99 @@
-% Converted from drafts/04_results.md. Budget: 1.75 pages.
 \section{Results}\label{sec:results}
-\placeholder{Results: 1.75 pages.}
+All grid, false-positive and power numbers use protocol v2 and are given as hand-written / fitted
+ladder unless stated otherwise.
+
+\subsection{Coverage results}
+We probed 14 free-tier model endpoints on three providers, of which 11 returned completions. For
+each we recorded whether it returns \texttt{usage}, \texttt{usage.cached\_tokens}, logprobs and
+\texttt{system\_fingerprint}, and whether it spends hidden reasoning tokens (Fig.~\ref{fig:F3}).
+GATEOPS billing, RUT, OTE with 16 token cap have very low coverage with RUT being zero.
+Our RUT version needs endpoint logprobs, which no endpoint returns; the published method instead
+needs a locally hosted copy of the model~\cite{zhu2025rut}. The models undergo reasoning steps which requires more tokens
+hence, the one token method was changed to have a 256 token cap and the coverage increased
+substantially but this could lead to an increase in cost of the probes.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_coverage}
+\caption{Auditor coverage on 11 working free-tier endpoints. Our RUT variant needs endpoint logprobs (0/11); OTE with its published 16-token cap fails on reasoning models (4/11).}
+\label{fig:F3}
+\end{figure}
+
+\subsection{The sealed grid}
+Each of the twelve arms was audited in 30 sessions per ladder and scored against 500 honest holdout
+sessions under the v2 thresholds (Fig.~\ref{fig:F4}). The applicable auditors perform well against
+A1, A7, A8, A9 having an AUROC of 1. For A10 the benchmarked based detectors fail as expected, other
+detectors succeed as they tend to generalise the probes. OTE and Iris-lite flag genuine altered
+sample settings (A4). Both of these use text-only audit and even with correct weights they report a
+substitution, because a shifted answer distribution looks like a different model. A5 has the most interesting results an aware adversary can bypass all
+the methods. GATEOPS scores benign routing (A11) at AUROC 1.00, which Section~\ref{sec:economics}
+examines.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_evasion}
+\caption{AUROC of each auditor against each arm (v2, hand-written ladder). In row A5 no auditor exceeds 0.56. Our RUT variant is inapplicable throughout.}
+\label{fig:F4}
+\end{figure}
+
+\subsection{False-positive rates v1 and v2}
+Under v1 (100 calibration sessions, \texttt{>=} rule) GATEOPS, KBF and BENCH exceeded their required
+false positive rate in the 50-session holdout. On 700 further honest sessions, GATEOPS exceeded its
+v1 threshold on about 5\% of sessions in every block, so the 0/100 in the calibration block was an
+unlucky draw, roughly one in 300. For KBF and BENCH the \texttt{>=} ambiguity increased their false
+positive rate. In the v2 run the GATEOPS false positive rate falls to 0\% and it
+falls to 0.8\% for KBF and 0.4\% for BENCH over 500 sessions (Fig.~\ref{fig:F5}). This is why v2 was introduced and used along
+with a larger, sealed calibration set.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_fpr}
+\caption{Holdout false-positive rates with Wilson 95\% intervals~\cite{wilson1927}, v1 (50 sessions) and v2 (500 sessions). Dashed line: $\alpha = 1\%$.}
+\label{fig:F5}
+\end{figure}
+
+\subsection{Real recorded responses}\label{sec:real}
+The census recorded 742 real responses, including one full 240-request OTE session each for
+\texttt{gpt-oss-120b} and \texttt{gpt-oss-20b}, two sizes of one model family. Run directly on these
+recordings, OTE is clean on the null (first half of the 120b session against the second half,
+Fisher $p = 1.0$). It separates 20b from 120b at $p = 4.5 \times 10^{-6}$, and a different family
+(Qwen) from 120b at $p = 3.8 \times 10^{-8}$. The two sizes have different ``random'' preferences:
+asked for a number from 1 to 100, the 120b most often answers 73 and the 20b answers 42. Two other
+findings point the opposite way. IRIS-lite's surface features cannot separate 20b from 120b on real
+text (cross-validated accuracy 0.46, $p = 0.96$), although they do separate a different family
+($p = 2.1 \times 10^{-7}$). And Groq returned 50 distinct \texttt{system\_fingerprint} values in 239
+honest requests to the 120b, so a changed fingerprint is routine and not evidence of substitution.
+
+\subsection{Live run}
+Latency cannot be replayed, so five SHIM servers were placed in front of Groq. An honest reference (REF), A0, A1,
+A3 at $\epsilon = 0.10$ and A9 (Table~\ref{tab:live}) were used. Each server received 96 requests
+(8 OTE cells $\times$ 12 repeats), timed at the client and interleaved in a new random order each
+round so that load drift could not show up as a difference between arms. All 480 requests
+succeeded, in 25 minutes and at no cost.
+
+\begin{table}[t]
+\centering
+\caption{Live run on Groq, 96 requests per server. Advertised \texttt{gpt-oss-120b}, substitute \texttt{gpt-oss-20b}. Bold: flagged at $p < 0.01$.}
+\label{tab:live}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+Server & Swapped & Median (s) & CV & KS vs REF ($p$) & OTE $p$ \\
+\midrule
+REF & 0/96 & 0.656 & 0.57 & -- & -- \\
+A0 & 0/96 & 0.695 & 0.70 & 0.18 (0.099) & 0.65 \\
+A1 & 96/96 & 0.538 & 0.79 & \textbf{0.50} ($2.9\!\times\!10^{-11}$) & 0.10 \\
+A3 & 14/96 & 0.650 & 0.61 & 0.08 (0.90) & 0.84 \\
+A9 & 96/96 & 0.870 & 0.99 & \textbf{0.43} ($3.1\!\times\!10^{-8}$) & 0.028 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The honest A0 passes both calibration-free tests. The real speed gap is 18\%, far smaller than the
+threefold gap the hand-written mock assumed, yet latency still catches full substitution (KS 0.50).
+OTE misses it at 12 repeats per cell ($p = 0.10$), although 30 repeats caught the same swap in the
+census, so the number of repeats per cell matters. A3, with 14 of 96 requests swapped, passes both
+tests. A9 pads responses toward a 0.9\,s mean we chose, with the latency CV GateScope reports
+(0.63~\cite{lin2026gatescope}), but Groq answers in 0.66\,s, so the padding made the substitute
+slower and noisier than the real model and it was caught (KS 0.43).

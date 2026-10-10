@@ -1,3 +1,88 @@
-% Converted from drafts/03_design.md. Budget: 1.0 page.
 \section{System Design}\label{sec:design}
-\placeholder{System Design: 1.0 page.}
+The testbed has two parts: SHIM, a gateway that cheats in controlled ways, and ARENA, which runs
+auditors against it under a sealed protocol.
+
+\textbf{SHIM.} SHIM is an HTTP server implementing the OpenAI chat-completions API, including the
+\texttt{usage} block and \texttt{system\_fingerprint}. An auditor points its base URL at SHIM and can
+tell it apart from a provider only by the resulting behaviour. Each request passes through one of
+twelve adversary arms (Table~\ref{tab:arms}), which choose the backend that answers and how the
+response is rewritten. Randomisation of the arms are done based on the hash of the request body so
+to preserve reproducibility. For every request SHIM records the arm, the backend that really
+answered, latency, reported and true token usage, and the cost incurred from public price tables.
+Every ROC curve and false-positive rate in this paper is computed from this record.
+
+\begin{table}[t]
+\centering
+\caption{Adversary arms. A4 and A11 serve the genuine model and test specificity.}
+\label{tab:arms}
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+Arm & Gateway behaviour & Truth \\
+\midrule
+A0 & Honest & genuine \\
+A1 & Always serves the substitute & subst. \\
+A2 & Same model name, other provider & subst. \\
+A3 & Substitute on a fraction $\epsilon$ of requests & subst. \\
+A4 & Right model, altered sampling settings & genuine \\
+A5 & Honest only on audit-shaped requests & subst. \\
+A6 & Replays cached answers to repeated prompts & subst. \\
+A7 & Substitute answers, second pass restyles & subst. \\
+A8 & Inflates reported token usage & subst. \\
+A9 & Adds delay to mimic the genuine latency & subst. \\
+A10 & Honest on public benchmark questions & subst. \\
+A11 & Splits traffic across honest providers of $M$ & genuine \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{A5} (probe-aware evasion) sends a request to the genuine model when it looks like an audit
+this could look like a prompt with at most 24 \texttt{max\_tokens}, a prompt under 220 characters,
+a prompt seen before, or contains text like ``reply with only''. \textbf{A10} keeps a list of public
+benchmark questions and answers those honestly. \textbf{A11} is not an attack. It spreads traffic
+across legitimate providers of the correct model, as commercial routers do by
+default~\cite{openrouter_exacto}, and serves as a false-positive test.
+
+A backend is either a \emph{replay corpus} or a \emph{mock}. The replay corpus holds real responses,
+recorded once from free-tier endpoints and committed, so every auditor sees byte-identical data.
+The mock samples model personalities (answer preferences, surface habits, accuracy, latency) for as
+many sessions as needed. We use two mock ladders: one hand-written, and one whose answer
+distributions and latency are fitted to the recorded census and the live run
+(Section~\ref{sec:results}).
+
+\textbf{ARENA:} Six auditors implement one interface that returns a score, a p-value and an
+\texttt{applicable} flag (Table~\ref{tab:auditors}). Five reimplement published methods, and none
+is the original authors' code. FUSE is new. It converts each applicable auditor's calibrated
+p-value to an e-value, multiplies them, and flags when the product exceeds $1/\alpha$; by Ville's
+inequality this controls the Type-I error at any stopping time~\cite{vovk2021evalues,ville1939}.
+
+\begin{table}[t]
+\centering
+\caption{Auditors in ARENA.}
+\label{tab:auditors}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Auditor & Source & Signal \\
+\midrule
+OTE & \cite{bruckner2026} & JSD of single-answer distributions, 8 cells \\
+IRIS-lite & \cite{iris2026} & 16 surface-string features, random forest \\
+GATEOPS & \cite{lin2026gatescope} & latency KS test, fingerprint, billing \\
+KBF & \cite{fang2026kbf} & agreement on 15 knowledge-boundary facts \\
+BENCH & \cite{cai2025} & accuracy on 12 MMLU/GPQA/GSM8K items \\
+RUT & \cite{zhu2025rut} & token-rank uniformity from endpoint logprobs \\
+FUSE & new & product of e-values, flag at $E > 1/\alpha$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Sealed protocol:} A single session is an audit of 495 queries. Each threshold is the
+largest score observed over $N$ honest (A0) calibration sessions, which bounds the marginal
+false-positive rate by $1/(N+1)$, and a session is flagged only when its score strictly exceeds
+the threshold. With $\alpha = 0.01$ and $N = 300$, the probability that the realised
+false-positive rate exceeds $\alpha$ is at most $0.99^{300} = 4.9\%$. The thresholds and all
+decision rules are written to one file, hashed with SHA-256, committed and tagged before any
+evaluation runs, and every evaluation script refuses to run if the hash has changed. Our first seal
+(v1, $N = 100$) used a \texttt{>=} rule. We report its results as sealed and fix the rule in a
+second seal (v2) instead of editing v1.

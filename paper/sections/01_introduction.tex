@@ -1,3 +1,55 @@
-% Converted from drafts/01_introduction.md. Budget: 0.75 pages.
 \section{Introduction and Threat Model}\label{sec:intro}
-\placeholder{Introduction and Threat Model: 0.75 pages.}
+Large Language Models are increasingly getting adapted via an intermediate like an api
+provider, here a client pays for a certain model, gets the response along with the model's name,
+which by itself cannot prove for an occurrence of model substitution~\cite{cai2025} by the provider
+or its absence. Substitution can occur for several reasons including monetary incentives which
+proves to be large. For the token mix used in this paper the substitute costs 11.5\% of the genuine
+model, which means that a gateway that swaps one request in ten saves about \$88 per \$1,000 of
+billed traffic.
+
+So far trusted hardware based attestation method~\cite{cai2025} proves to be the only definite way
+to check this, but gateways do not offer such methods today. What a
+client can do is check the responses using black box auditors. They send probe requests and based
+on the response which include text, timing and other metadata, they can check whether the
+required/advertised model has actually answered.
+
+These black-box auditors employ several statistical methods. From April 2025 onwards at least 7
+such auditors have been proposed~\cite{cai2025,zhu2025rut,lin2026gatescope,fang2026kbf,bruckner2026,iris2026,difr2025}.
+Each of them were tested on their own test-bed with their own adversaries. They choose thresholds
+chosen on the same data which is reported. A frozen-threshold replication~\cite{holdout2026} shows
+how fragile this is in practice. A method with perfect accuracy during development fell to 50\%
+sensitivity on fresh model-pairs and half of those pairs could not be scored at all. The proposed
+auditing methods so far have never been compared on a common testbed against a common adversary,
+and the papers that consider a gateway which can detect auditing~\cite{cai2025,zhu2025rut,iris2026}
+test it only against their own probes.
+
+\textbf{Threat model.} The user sends HTTPS requests to a gateway that seems to provide model $M$.
+Routing and response metadata is under complete control of the gateway. For each request three
+things may happen: the gateway may forward it to $M$, to a cheaper substitute $M'$ to another
+provider of $M$ or to a cache. Apart from this, it may also rewrite the reported model name, the
+\texttt{usage} token counts and \texttt{system\_fingerprint} and some delay may also be
+added. Classification of requests by their shape is also possible. In order to simulate a real-life
+adversary the goal of the gateway becomes to save as much as possible while keeping the
+probability of detection low. The clients get to see the response text, client-side latency, the
+\texttt{usage} block, the fingerprint and the logprobs where the endpoint expose them.
+Timing can be measured by the client on their own the other signal is the content. To test for
+false positives honest inference variations such as load balancing across legitimate providers of
+$M$ is permitted.
+
+\textbf{Contributions.}
+\begin{itemize}
+\item \textbf{A shared adversarial testbed:} SHIM is an OpenAI-compatible gateway which has twelve
+  adversary arms and a hidden ledger with the answers. Arms such as probe-aware
+  evasion and canary-awareness were studied before for single detectors~\cite{cai2025,iris2026};
+  here every arm runs against every detector
+\item \textbf{A sealed comparison of six auditors:} We have reimplemented five of the published
+  auditing methods and added an e-value fusion. All of them which are evaluated with thresholds
+  are hashed and tagged appropriately. An auditor that cannot run on a specific arm reports as
+  `uninformative'.
+\item \textbf{Practical Deployability:} None of the endpoints returns the logprobs our version of
+  the rank-based auditor needs. The most recent one token fingerprint method
+  runs on 4 of them as hidden reasoning steps are present in many of the real life models.
+\item \textbf{Three negative results:} An auditor becomes chance-like in presence of a probe-aware
+  evasion. False positive budgets set a dilution floor of $\epsilon^* = 0.10$. Timing based auditors
+  cannot tell fraud from sanctioned routing.
+\end{itemize}
