@@ -7,8 +7,8 @@ We probed 14 free-tier model endpoints on three providers, of which 11 returned 
 each we recorded whether it returns \texttt{usage}, \texttt{usage.cached\_tokens}, logprobs and
 \texttt{system\_fingerprint}, and whether it spends hidden reasoning tokens (Fig.~\ref{fig:F3}).
 GATEOPS billing, RUT, OTE with 16 token cap have very low coverage with RUT being zero.
-The published RUT method requires a locally hosted copy of the model~\cite{zhu2025rut} which is
-impractical hence the low coverage. The models undergo reasoning steps which requires more tokens
+Our RUT version needs endpoint logprobs, which no endpoint returns; the published method instead
+needs a locally hosted copy of the model~\cite{zhu2025rut}. The models undergo reasoning steps which requires more tokens
 hence, the one token method was changed to have a 256 token cap and the coverage increased
 substantially but this could lead to an increase in cost of the probes.
 
@@ -21,11 +21,11 @@ substantially but this could lead to an increase in cost of the probes.
 
 \subsection{The sealed grid}
 Each of the twelve arms was audited in 30 sessions per ladder and scored against 500 honest holdout
-sessions under the v2 thresholds (Fig.~\ref{fig:F4}). The applicable models perform well against
+sessions under the v2 thresholds (Fig.~\ref{fig:F4}). The applicable auditors perform well against
 A1, A7, A8, A9 having an AUROC of 1. For A10 the benchmarked based detectors fail as expected, other
-detectors succeed as the tend to generalise the probes. OTE and Iris-lite flag genuine altered
-sample settings (A4). Both of these use text-only audit and even with correct weights they seem to
-detect actual substitution. A5 has the most interesting results an aware adversary can bypass all
+detectors succeed as they tend to generalise the probes. OTE and Iris-lite flag genuine altered
+sample settings (A4). Both of these use text-only audit and even with correct weights they report a
+substitution, because a shifted answer distribution looks like a different model. A5 has the most interesting results an aware adversary can bypass all
 the methods. GATEOPS scores benign routing (A11) at AUROC 1.00, which Section~\ref{sec:economics}
 examines.
 
@@ -41,8 +41,8 @@ Under v1 (100 calibration sessions, \texttt{>=} rule) GATEOPS, KBF and BENCH exc
 false positive rate in the 50-session holdout. On 700 further honest sessions, GATEOPS exceeded its
 v1 threshold on about 5\% of sessions in every block, so the 0/100 in the calibration block was an
 unlucky draw, roughly one in 300. For KBF and BENCH the \texttt{>=} ambiguity increased their false
-positive rate. In the v2 run the GATEOPS false positive rate falls to 0\% and for KBF and BENCH it
-falls to 0.8\% for 500 sessions (Fig.~\ref{fig:F5}). This is why v2 was introduced and used along
+positive rate. In the v2 run the GATEOPS false positive rate falls to 0\% and it
+falls to 0.8\% for KBF and 0.4\% for BENCH over 500 sessions (Fig.~\ref{fig:F5}). This is why v2 was introduced and used along
 with a larger, sealed calibration set.
 
 \begin{figure}[t]
@@ -65,10 +65,11 @@ text (cross-validated accuracy 0.46, $p = 0.96$), although they do separate a di
 honest requests to the 120b, so a changed fingerprint is routine and not evidence of substitution.
 
 \subsection{Live run}
-Five SHIM servers were placed in front of Groq to replay latency. An honest reference (REF), A0, A1,
+Latency cannot be replayed, so five SHIM servers were placed in front of Groq. An honest reference (REF), A0, A1,
 A3 at $\epsilon = 0.10$ and A9 (Table~\ref{tab:live}) were used. Each server received 96 requests
 (8 OTE cells $\times$ 12 repeats), timed at the client and interleaved in a new random order each
-round so that load drift could not show up as a difference between arms.
+round so that load drift could not show up as a difference between arms. All 480 requests
+succeeded, in 25 minutes and at no cost.
 
 \begin{table}[t]
 \centering
