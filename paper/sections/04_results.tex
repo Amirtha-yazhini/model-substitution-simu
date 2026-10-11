@@ -6,11 +6,11 @@ ladder unless stated otherwise.
 We probed 14 free-tier model endpoints on three providers, of which 11 returned completions. For
 each we recorded whether it returns \texttt{usage}, \texttt{usage.cached\_tokens}, logprobs and
 \texttt{system\_fingerprint}, and whether it spends hidden reasoning tokens (Fig.~\ref{fig:F3}).
-GATEOPS billing, RUT, OTE with 16 token cap have very low coverage with RUT being zero.
+GATEOPS billing, RUT and OTE with its 16-token cap have very low coverage, and RUT has none.
 Our RUT version needs endpoint logprobs, which no endpoint returns; the published method instead
-needs a locally hosted copy of the model~\cite{zhu2025rut}. The models undergo reasoning steps which requires more tokens
-hence, the one token method was changed to have a 256 token cap and the coverage increased
-substantially but this could lead to an increase in cost of the probes.
+needs a locally hosted copy of the model~\cite{zhu2025rut}. Reasoning models spend tokens on hidden reasoning steps,
+so we raised the one-token method's cap to 256 tokens. Coverage increased
+substantially, though the probes may cost more.
 
 \begin{figure}[t]
 \centering
@@ -22,10 +22,10 @@ substantially but this could lead to an increase in cost of the probes.
 \subsection{The sealed grid}
 Each of the twelve arms was audited in 30 sessions per ladder and scored against 500 honest holdout
 sessions under the v2 thresholds (Fig.~\ref{fig:F4}). The applicable auditors perform well against
-A1, A7, A8, A9 having an AUROC of 1. For A10 the benchmarked based detectors fail as expected, other
-detectors succeed as they tend to generalise the probes. OTE and Iris-lite flag genuine altered
-sample settings (A4). Both of these use text-only audit and even with correct weights they report a
-substitution, because a shifted answer distribution looks like a different model. A5 has the most interesting results an aware adversary can bypass all
+A1, A7, A8 and A9, with an AUROC of 1. On A10 the benchmark-based detector fails as expected, while the other
+detectors succeed because their probes are not benchmark questions. OTE and IRIS-lite flag the genuine model
+with altered sampling settings (A4). Both audit text only, so even with the correct weights they report a
+substitution, because a shifted answer distribution looks like a different model. A5 gives the most interesting result. An adversary that recognises audits bypasses all
 the methods. GATEOPS scores benign routing (A11) at AUROC 1.00, which Section~\ref{sec:economics}
 examines.
 
@@ -37,13 +37,13 @@ examines.
 \end{figure}
 
 \subsection{False-positive rates v1 and v2}
-Under v1 (100 calibration sessions, \texttt{>=} rule) GATEOPS, KBF and BENCH exceeded their required
-false positive rate in the 50-session holdout. On 700 further honest sessions, GATEOPS exceeded its
+Under v1 (100 calibration sessions, \texttt{>=} rule) GATEOPS, KBF and BENCH exceeded their target
+false-positive rate in the 50-session holdout. On 700 further honest sessions, GATEOPS exceeded its
 v1 threshold on about 5\% of sessions in every block, so the 0/100 in the calibration block was an
-unlucky draw, roughly one in 300. For KBF and BENCH the \texttt{>=} ambiguity increased their false
-positive rate. In the v2 run the GATEOPS false positive rate falls to 0\% and it
-falls to 0.8\% for KBF and 0.4\% for BENCH over 500 sessions (Fig.~\ref{fig:F5}). This is why v2 was introduced and used along
-with a larger, sealed calibration set.
+unlucky draw, roughly one in 300. For KBF and BENCH the \texttt{>=} ambiguity increased their false-positive
+rate. Under v2 the GATEOPS false-positive rate falls to 0\%, and it
+falls to 0.8\% for KBF and 0.4\% for BENCH over 500 sessions (Fig.~\ref{fig:F5}). This is why we introduced v2, with a larger
+sealed calibration set.
 
 \begin{figure}[t]
 \centering
@@ -62,11 +62,11 @@ asked for a number from 1 to 100, the 120b most often answers 73 and the 20b ans
 findings point the opposite way. IRIS-lite's surface features cannot separate 20b from 120b on real
 text (cross-validated accuracy 0.46, $p = 0.96$), although they do separate a different family
 ($p = 2.1 \times 10^{-7}$). And Groq returned 50 distinct \texttt{system\_fingerprint} values in 239
-honest requests to the 120b, so a changed fingerprint is routine and not evidence of substitution.
+honest requests to the 120b, so fingerprint changes happen on honest traffic and say nothing about substitution.
 
 \subsection{Live run}
-Latency cannot be replayed, so five SHIM servers were placed in front of Groq. An honest reference (REF), A0, A1,
-A3 at $\epsilon = 0.10$ and A9 (Table~\ref{tab:live}) were used. Each server received 96 requests
+Latency cannot be replayed, so we placed five SHIM servers in front of Groq, running an honest reference (REF), A0, A1,
+A3 at $\epsilon = 0.10$ and A9 (Table~\ref{tab:live}). Each server received 96 requests
 (8 OTE cells $\times$ 12 repeats), timed at the client and interleaved in a new random order each
 round so that load drift could not show up as a difference between arms. All 480 requests
 succeeded, in 25 minutes and at no cost.

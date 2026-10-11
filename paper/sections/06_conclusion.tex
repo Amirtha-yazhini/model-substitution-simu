@@ -16,13 +16,13 @@ small live run.} A5 is our own classifier, and a real one could be better or wor
 96 requests per arm on one provider, and benign routing could not be run live.
 
 \textbf{Conclusion.} We ran five published model substitution auditors and one new fusion against a
-common adversarial gateway, under thresholds sealed before evaluation. Auditing is cheap, at
-well under a cent per session, but it is not robust. A gateway that recognises audit shaped
-requests keeps every auditor at chance, and the shape it recognises is the one that makes probes
-cheap. Below $\epsilon^* \approx 0.10$--$0.15$ no admissible audit detects dilution, because false
-positive budgets, not cost, limit how often an audit can be repeated. Timing auditors flag
-sanctioned routing more readily than fraud, which separates identity violations, which content
-can reveal, from disclosure and billing violations, which it cannot. Verifiable accounting for LLM
+common adversarial gateway, under thresholds sealed before evaluation. An audit session costs
+well under a cent, but a gateway that recognises audit-shaped
+requests keeps every auditor at chance. The requests it recognises are short prompts with small
+token caps, which is also what keeps probes cheap. Below $\epsilon^* \approx 0.10$--$0.15$ no admissible audit detects dilution, because the false-positive
+budget caps how often an audit can be repeated. Timing auditors flag
+sanctioned routing more readily than fraud. Content can reveal identity violations, but not
+disclosure or billing violations. Verifiable accounting for LLM
 APIs will need probes that cannot be told apart from production traffic, disclosure of routing, and
 attested metering. Black-box statistics alone cannot provide the last two.
 
