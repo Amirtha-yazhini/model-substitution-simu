@@ -1,4 +1,8 @@
-# Paper plan: COMSNETS 2027 CSP Workshop
+# Paper plan: COMSNETS 2027 SysAI Workshop
+
+> Venue changed from CSP to SysAI on 2026-10-07. The SysAI call for papers was not readable on
+> comsnets.org that day; recheck its page limit, review mode and topics before submitting. The
+> CSP details below are kept for reference.
 
 **Venue:** Cyber Security and Privacy Workshop (CSP), COMSNETS 2027, Bengaluru, January 2027.
 <https://www.comsnets.org/cybersecurity_and_privacy_workshop>

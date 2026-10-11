@@ -1,3 +1,15 @@
 \begin{abstract}
-\placeholder{Abstract, about 150 words. Written last.}
+Commercial LLM API providers have a one-way trust problem. They are black boxes that show little
+or nothing about the model behind the endpoint. The users have no way to definitely
+test if the endpoint or the model served is actually the one they paid for. So far, at least 7
+methods have been proposed to tackle this, all of them tested against their own adversaries. We
+built SHIM, an OpenAI-compatible gateway with twelve switchable cheating strategies and a hidden
+ground-truth ledger, and ARENA, which runs five reimplemented detectors and a new e-value fusion
+under thresholds sealed by SHA-256 before evaluation. Of 11 free-tier endpoints none returns the
+logprobs our version of the rank-based detector needs, whereas Bruckner's one-token method, as published, runs on 4 of them. A
+gateway that honestly answers audit-style requests keeps all the detectors at
+chance level (AUROC~$\le$~0.61). Although an audit costs less than one cent, no admissible audit
+detects substitution in fewer than 10\% of the requests, a rate that still enables the gateway to
+save 8.8\% of the bill. Timing-based detectors flagged benign load balancing more
+frequently than actual fraud.
 \end{abstract}
